@@ -15,6 +15,13 @@ export const mkState = {
   mkApp: (x: PayloadOfState<'App'>): State => tagged('App', x),
 };
 
+export const mkMsg = {
+  mkGetAvailableWallets: (x: PayloadOfMsg<'GetAvailableWallets'>): Msg =>
+    tagged('GetAvailableWallets', x),
+  mkSomeOtherAction: (x: PayloadOfMsg<'SomeOtherAction'>): Msg =>
+    tagged('SomeOtherAction', x),
+};
+
 export const unState =
   <Z>(
     def: Z,
@@ -34,7 +41,7 @@ export const unState =
 
 export const unMsg =
   <Z>(
-      def: Z,
+    def: Z,
     cases: {
       onGetAvailableWallets?: (x: PayloadOfMsg<'GetAvailableWallets'>) => Z;
       onSomeOtherAction?: (x: PayloadOfMsg<'SomeOtherAction'>) => Z;
@@ -92,7 +99,7 @@ export const controlMsg =
                     ),
                   );
                 }
-              }
+              },
             }),
           );
         },

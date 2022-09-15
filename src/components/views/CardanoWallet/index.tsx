@@ -27,30 +27,28 @@ export const CardanoWallet = () => {
                   variant="primary"
                   disabled={!st.availableWallets.includes(wallet)}
                   onClick={() => {
-                    if (window.cardano[wallet]) {
-                      window.cardano.yoroi.enable().then(walletApi => {
-                        console.log(walletApi);
-                        console.log(walletApi.getBalance().then(console.log));
+                    window.cardano[wallet].enable().then(walletApi => {
+                      console.log(walletApi);
+                      console.log(walletApi.getBalance().then(console.log));
+                      console.log(
+                        walletApi.getChangeAddress().then(console.log),
+                      );
+                      wallet !== 'yoroi' &&
                         console.log(
-                          walletApi.getChangeAddress().then(console.log),
+                          walletApi.getCollateral().then(console.log),
                         );
-                        wallet !== 'yoroi' &&
-                          console.log(
-                            walletApi.getCollateral().then(console.log),
-                          );
-                        console.log(walletApi.getNetworkId().then(console.log));
-                        console.log(
-                          walletApi.getRewardAddresses().then(console.log),
-                        );
-                        console.log(
-                          walletApi.getUnusedAddresses().then(console.log),
-                        );
-                        console.log(
-                          walletApi.getUsedAddresses().then(console.log),
-                        );
-                        console.log(walletApi.getUtxos().then(console.log));
-                      });
-                    }
+                      console.log(walletApi.getNetworkId().then(console.log));
+                      console.log(
+                        walletApi.getRewardAddresses().then(console.log),
+                      );
+                      console.log(
+                        walletApi.getUnusedAddresses().then(console.log),
+                      );
+                      console.log(
+                        walletApi.getUsedAddresses().then(console.log),
+                      );
+                      console.log(walletApi.getUtxos().then(console.log));
+                    });
                   }}
                 >
                   Connect {wallet.toUpperCase()} Wallet

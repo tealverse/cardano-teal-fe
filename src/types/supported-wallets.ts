@@ -1,7 +1,7 @@
 export enum SupportedWallets {
-  NAMI = 'nami',
+  YOROI = 'yoroi',
   ETERNL = 'eternl',
+  NAMI = 'nami',
   FLINT = 'flint',
   BEGIN = 'begin',
-  YOROI = 'yoroi',
 }

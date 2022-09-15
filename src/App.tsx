@@ -1,6 +1,6 @@
-import React from 'react'
-import tw from 'twin.macro'
-import { Button, Logo } from './components'
+import tw from 'twin.macro';
+import { Button, Logo } from './components';
+import { CardanoWallet } from './components/CardanoWallet';
 
 const styles = {
   // Move long class sets out of jsx to keep it scannable
@@ -8,17 +8,15 @@ const styles = {
     tw`flex flex-col items-center justify-center h-screen`,
     hasBackground && tw`bg-gradient-to-b from-electric to-ribbon`,
   ],
-}
+};
 
 const App = () => (
   <div css={styles.container({ hasBackground: true })}>
     <div tw="flex flex-col justify-center h-full gap-y-5">
-      <Button variant="primary">Submit</Button>
-      <Button variant="secondary">Cancel</Button>
-      <Button isSmall>Close</Button>
+      <CardanoWallet />
     </div>
     <Logo />
   </div>
-)
+);
 
-export default App
+export default App;

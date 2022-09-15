@@ -1,6 +1,5 @@
 import tw from 'twin.macro';
-import { Button, Logo } from './components';
-import { CardanoWallet } from './components/CardanoWallet';
+import { CardanoWallet } from './components/views/CardanoWallet';
 
 const styles = {
   // Move long class sets out of jsx to keep it scannable
@@ -15,7 +14,6 @@ const App = () => (
     <div tw="flex flex-col justify-center h-full gap-y-5">
       <CardanoWallet />
     </div>
-    <Logo />
   </div>
 );
 

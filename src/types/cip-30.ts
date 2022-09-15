@@ -168,13 +168,6 @@ export type SignData = (
  */
 export type SubmitTx = (tx: Cbor) => Promise<string>;
 
-export enum WalletName {
-  NAMI = 'nami',
-  ETERNL = 'eternl',
-  FLINT = 'flint',
-  BEGIN = 'begin',
-}
-
 export interface WalletApi {
   getNetworkId: GetNetworkId;
 

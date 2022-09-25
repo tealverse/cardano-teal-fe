@@ -12,7 +12,13 @@ to generate this file without the comments in this block.
 -}
 { name = "cardano-teal-fe"
 , dependencies =
-  [ "console", "effect", "maybe", "prelude", "typescript-bridge" ]
+  [ "aff-promise"
+  , "console"
+  , "effect"
+  , "maybe"
+  , "prelude"
+  , "typescript-bridge"
+  ]
 , packages = ./packages.dhall
 , sources = [ "pkgs/purs/src/**/*.purs", "pkgs/purs/test/**/*.purs" ]
 }

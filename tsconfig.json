@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "~/*": ["./pkgs/ts/cardano-fe/core/*"]
+    },
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": false,
@@ -22,7 +22,8 @@
     "jsxImportSource": "@emotion/react"
   },
   "include": [
-    "src",
-    "types"
+    "pkgs/ts/cardano-fe/src",
+    "pkgs/ts/cardano-fe/types",
+    "pkgs/ts/cardano-fe/core"
   ]
 }

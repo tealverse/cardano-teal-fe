@@ -1,0 +1,9 @@
+{
+  "purescript.buildCommand": "just spago-build-ide",
+  "purescript.autoStartPscIde": true,
+  "purescript.formatter": "purs-tidy",
+  "purescript.sourcePath": "pkgs/purs/src",
+  "purescript.fastRebuild": true,
+  "purescript.addNpmPath": true,
+  "purescript.outputDirectory": "pkgs/ts/cardano-fe/core"
+}

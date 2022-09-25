@@ -2,16 +2,20 @@ module CardanoFe.Main where
 
 import Prelude
 
+import Control.Monad.Error.Class (class MonadThrow, liftEither, try)
+import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
 import Control.Promise (Promise, toAff)
-import Data.Array (foldM, foldr)
+import Data.Array (foldM)
+import Data.Bifunctor (lmap)
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String as Str
-import Data.Typelevel.Undefined (undefined)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
+import Effect.Aff.Class (class MonadAff, liftAff)
+import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console (log)
 import TsBridge (class ToTsBridge, tsOpaqueType)
 
@@ -58,6 +62,11 @@ newtype Utxo = Utxo
   , amount :: Balance
   }
 
+data AppError
+  = ErrWalletNotFound String
+  | ErrHttp
+  | ErrUnknown
+
 type WalletState =
   { type :: Wallet
   , balance :: Maybe Balance
@@ -79,6 +88,8 @@ data AppState
       }
   | App WalletState Page
 
+newtype AppM a = AppM (ExceptT AppError Aff a)
+
 initState :: AppState
 initState = Login
   { supportedWallets: []
@@ -89,11 +100,11 @@ initState = Login
 data Msg = GetAvailableWallets | SetWallet Wallet
 
 type AppEnv =
-  { updateState :: (AppState -> AppState) -> Aff Unit
-  , getState :: Aff AppState
+  { updateState :: (AppState -> AppState) -> AppM Unit
+  , getState :: AppM AppState
   }
 
-control :: AppEnv -> Msg -> Aff Unit
+control :: AppEnv -> Msg -> AppM Unit
 control { updateState, getState } msg =
   do
     state <- getState
@@ -118,14 +129,14 @@ control { updateState, getState } msg =
 
       _, _ -> pure unit
 
-getBrowserWallets :: Aff (Array UnsupportedWallet)
+getBrowserWallets :: AppM (Array UnsupportedWallet)
 getBrowserWallets = getBrowserWalletsImpl
   <#> map (\walletName -> { walletName })
   # liftEffect
 
 getSupportedWallets
   :: Array UnsupportedWallet
-  -> Aff
+  -> AppM
        { supportedWallets :: Array SupportedWallet
        , unsupportedWallets :: Array UnsupportedWallet
        }
@@ -138,8 +149,16 @@ getSupportedWallets = foldM reducer { supportedWallets: [], unsupportedWallets: 
         enabled <- isWalletEnabled $ printWallet wallet
         pure $ accum { supportedWallets = accum.supportedWallets <> [ { enabled, wallet } ] }
 
-isWalletEnabled :: String -> Aff Boolean
-isWalletEnabled = toAff <<< isWalletEnabledImpl
+runAppM :: forall a. AppM a -> Aff (Either AppError a)
+runAppM (AppM ma) = runExceptT ma
+
+isWalletEnabled :: String -> AppM Boolean
+isWalletEnabled str = isWalletEnabledImpl str
+  # toAff
+  # try
+  <#> lmap (\_ -> ErrWalletNotFound str)
+  # liftAff
+  >>= liftEither
 
 initWalletState :: Wallet -> WalletState
 initWalletState w =
@@ -171,9 +190,20 @@ instance ToTsBridge Utxo where
 
 derive instance Generic Wallet _
 
+derive newtype instance Functor AppM
+derive newtype instance Apply AppM
+derive newtype instance Applicative AppM
+derive newtype instance Bind AppM
+derive newtype instance Monad AppM
+derive newtype instance MonadAff AppM
+derive newtype instance MonadEffect AppM
+derive newtype instance MonadError AppError AppM
+derive newtype instance MonadThrow AppError AppM
+
 instance Show Wallet where
   show = genericShow
 
 foreign import isWalletEnabledImpl :: String -> Promise Boolean
 
 foreign import getBrowserWalletsImpl :: Effect (Array String)
+

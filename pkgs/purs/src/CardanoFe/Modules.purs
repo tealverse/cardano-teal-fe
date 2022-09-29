@@ -12,7 +12,9 @@ myTsProgram :: TsProgram
 myTsProgram =
   tsProgram
     [ tsModuleFile "CardanoFe.Main/index"
-        [ tsTypeAlias "WalletState" (Proxy :: _ CardanoFe.Main.WalletState) ]
+        [ tsTypeAlias "WalletState" (Proxy :: _ CardanoFe.Main.WalletState)
+        , tsValue mp "foo" 13.0
+        ]
     ]
 
 main :: Effect Unit

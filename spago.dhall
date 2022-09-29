@@ -12,11 +12,17 @@ to generate this file without the comments in this block.
 -}
 { name = "cardano-teal-fe"
 , dependencies =
-  [ "aff-promise"
+  [ "aff"
+  , "aff-promise"
+  , "arrays"
+  , "bifunctors"
   , "console"
   , "effect"
+  , "either"
   , "maybe"
   , "prelude"
+  , "strings"
+  , "transformers"
   , "typescript-bridge"
   ]
 , packages = ./packages.dhall

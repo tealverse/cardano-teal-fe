@@ -2,6 +2,7 @@ module CardanoFe.Main where
 
 import Prelude
 
+import CardanoFe.TsBridge (class ToTsBridge)
 import Control.Monad.Error.Class (class MonadThrow, liftEither, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
 import Control.Promise (Promise, toAff)
@@ -17,7 +18,7 @@ import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console (log)
-import TsBridge (class ToTsBridge, tsOpaqueType)
+import TsBridge.Class (tsOpaqueType)
 
 moduleName :: String
 moduleName = "CardanoFe.Main"
@@ -57,8 +58,8 @@ newtype Balance = Balance Int
 newtype Address = Address String
 
 newtype Utxo = Utxo
-  { from :: String
-  , to :: String
+  { from :: Address
+  , to :: Address
   , amount :: Balance
   }
 
@@ -177,16 +178,16 @@ main = do
 --
 
 instance ToTsBridge Wallet where
-  toTsBridge = tsOpaqueType moduleName "Wallet" []
+  toTsBridge = tsOpaqueType moduleName "Wallet"
 
 instance ToTsBridge Balance where
-  toTsBridge = tsOpaqueType moduleName "Balance" []
+  toTsBridge = tsOpaqueType moduleName "Balance"
 
 instance ToTsBridge Address where
-  toTsBridge = tsOpaqueType moduleName "Address" []
+  toTsBridge = tsOpaqueType moduleName "Address"
 
 instance ToTsBridge Utxo where
-  toTsBridge = tsOpaqueType moduleName "Utxo" []
+  toTsBridge = tsOpaqueType moduleName "Utxo"
 
 derive instance Generic Wallet _
 

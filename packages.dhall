@@ -6,6 +6,7 @@ in  upstream
   with typescript-bridge =
     { dependencies =
       [ "aff"
+      , "aff-promise"
       , "argonaut"
       , "arrays"
       , "bifunctors"
@@ -53,7 +54,7 @@ in  upstream
       , "typelevel-prelude"
       ]
     , repo = "https://github.com/thought2/purescript-typescript-bridge.git"
-    , version = "7325e11b599d043aa4ca898417cc804de5e48b60"
+    , version = "c76b5c82d699abe90cb067dd1e73d2ca4fe01112"
     }
   with node-glob-basic =
     { dependencies =

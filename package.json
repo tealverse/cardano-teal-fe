@@ -5,6 +5,7 @@
       "preset": "emotion"
     }
   },
+  "type": "module",
   "main": "pkgs/ts/cardano-fe/src",
   "scripts": {
     "dev": "NODE_ENV=development vite",

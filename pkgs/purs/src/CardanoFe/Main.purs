@@ -2,7 +2,7 @@ module CardanoFe.Main where
 
 import Prelude
 
-import CardanoFe.TsBridge (class ToTsBridge)
+import CardanoFe.TsBridge (class ToTsBridge, MappingToTsBridge(..))
 import Control.Monad.Error.Class (class MonadThrow, liftEither, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
 import Control.Promise (Promise, toAff)
@@ -18,7 +18,7 @@ import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console (log)
-import TsBridge.Class (tsOpaqueType)
+import TsBridge (tsOpaqueType, tsOpaqueType1)
 
 moduleName :: String
 moduleName = "CardanoFe.Main"
@@ -188,6 +188,18 @@ instance ToTsBridge Address where
 
 instance ToTsBridge Utxo where
   toTsBridge = tsOpaqueType moduleName "Utxo"
+
+instance ToTsBridge AppState where
+  toTsBridge = tsOpaqueType moduleName "AppState"
+
+instance ToTsBridge Msg where
+  toTsBridge = tsOpaqueType moduleName "Msg"
+
+instance ToTsBridge a => ToTsBridge (AppM a) where
+  toTsBridge = tsOpaqueType1 MP moduleName "AppM" "A"
+
+instance ToTsBridge AppError where
+  toTsBridge = tsOpaqueType moduleName "AppError"
 
 derive instance Generic Wallet _
 

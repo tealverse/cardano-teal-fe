@@ -3,8 +3,10 @@ module CardanoFe.Modules where
 import Prelude
 
 import CardanoFe.Main as CardanoFe.Main
+import CardanoFe.TsBridge (MappingToTsBridge(..))
+import Control.Promise as Control.Promise
 import Effect (Effect)
-import TsBridge (TsProgram, tsModuleFile, tsProgram, tsTypeAlias)
+import TsBridge (A, TsProgram, tsModuleFile, tsProgram, tsTypeAlias, tsValue)
 import TsBridge.Cli (mkTypeGenCli)
 import Type.Proxy (Proxy(..))
 
@@ -12,8 +14,19 @@ myTsProgram :: TsProgram
 myTsProgram =
   tsProgram
     [ tsModuleFile "CardanoFe.Main/index"
-        [ tsTypeAlias "WalletState" (Proxy :: _ CardanoFe.Main.WalletState)
-        , tsValue mp "foo" 13.0
+        [ tsValue MP "control" CardanoFe.Main.control
+        , tsValue MP "initState" CardanoFe.Main.initState
+        , tsValue MP "initWalletState" CardanoFe.Main.initWalletState
+        , tsValue MP "printWallet" CardanoFe.Main.printWallet
+        , tsValue MP "parseWallet" CardanoFe.Main.parseWallet
+        , tsValue MP "getBrowserWallets" CardanoFe.Main.getBrowserWallets
+        , tsValue MP "getSupportedWallets" CardanoFe.Main.getSupportedWallets
+        , tsValue MP "isWalletEnabled" CardanoFe.Main.isWalletEnabled
+        , tsValue MP "runAppM" (CardanoFe.Main.runAppM :: _ A -> _)
+        , tsTypeAlias MP "WalletState" (Proxy :: _ CardanoFe.Main.WalletState)
+        ]
+    , tsModuleFile "Control.Promise/index"
+        [ tsValue MP "fromAff" (Control.Promise.fromAff :: _ A -> _ (_ A))
         ]
     ]
 

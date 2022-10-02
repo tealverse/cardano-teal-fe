@@ -1,106 +1,6 @@
-{-
-Welcome to your new Dhall package-set!
-
-Below are instructions for how to edit this file for most use
-cases, so that you don't need to know Dhall to use it.
-
-## Use Cases
-
-Most will want to do one or both of these options:
-1. Override/Patch a package's dependency
-2. Add a package not already in the default package set
-
-This file will continue to work whether you use one or both options.
-Instructions for each option are explained below.
-
-### Overriding/Patching a package
-
-Purpose:
-- Change a package's dependency to a newer/older release than the
-    default package set's release
-- Use your own modified version of some dependency that may
-    include new API, changed API, removed API by
-    using your custom git repo of the library rather than
-    the package set's repo
-
-Syntax:
-where `entityName` is one of the following:
-- dependencies
-- repo
-- version
--------------------------------
-let upstream = --
-in  upstream
-  with packageName.entityName = "new value"
--------------------------------
-
-Example:
--------------------------------
-let upstream = --
-in  upstream
-  with halogen.version = "master"
-  with halogen.repo = "https://example.com/path/to/git/repo.git"
-
-  with halogen-vdom.version = "v4.0.0"
-  with halogen-vdom.dependencies = [ "extra-dependency" ] # halogen-vdom.dependencies
--------------------------------
-
-### Additions
-
-Purpose:
-- Add packages that aren't already included in the default package set
-
-Syntax:
-where `<version>` is:
-- a tag (i.e. "v4.0.0")
-- a branch (i.e. "master")
-- commit hash (i.e. "701f3e44aafb1a6459281714858fadf2c4c2a977")
--------------------------------
-let upstream = --
-in  upstream
-  with new-package-name =
-    { dependencies =
-       [ "dependency1"
-       , "dependency2"
-       ]
-    , repo =
-       "https://example.com/path/to/git/repo.git"
-    , version =
-        "<version>"
-    }
--------------------------------
-
-Example:
--------------------------------
-let upstream = --
-in  upstream
-  with benchotron =
-      { dependencies =
-          [ "arrays"
-          , "exists"
-          , "profunctor"
-          , "strings"
-          , "quickcheck"
-          , "lcg"
-          , "transformers"
-          , "foldable-traversable"
-          , "exceptions"
-          , "node-fs"
-          , "node-buffer"
-          , "node-readline"
-          , "datetime"
-          , "now"
-          ]
-      , repo =
-          "https://github.com/hdgarrood/purescript-benchotron.git"
-      , version =
-          "v7.0.0"
-      }
--------------------------------
--}
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.15.4-20220924/packages.dhall
-        sha256:81067801c9959b544ac870b392b8520d516b32bddaf9c98b32d40037200c071f
+      https://github.com/purescript/package-sets/releases/download/psc-0.15.4-20220901/packages.dhall
+        sha256:f1531b29c21ac437ffe5666c1b6cc76f0a9c29d3c9d107ff047aa2567744994f
 
 in  upstream
   with typescript-bridge =
@@ -110,13 +10,16 @@ in  upstream
       , "arrays"
       , "bifunctors"
       , "console"
+      , "control"
       , "debug"
       , "dodo-printer"
       , "effect"
       , "either"
       , "exceptions"
       , "foldable-traversable"
+      , "foreign-object"
       , "heterogeneous"
+      , "identity"
       , "language-cst-parser"
       , "lists"
       , "maybe"
@@ -131,19 +34,26 @@ in  upstream
       , "optparse"
       , "ordered-collections"
       , "ordered-set"
+      , "parsing"
+      , "partial"
       , "prelude"
       , "ps-cst"
       , "record"
+      , "record-extra"
       , "safe-coerce"
       , "spec"
       , "strings"
       , "sunde"
+      , "tailrec"
+      , "tidy"
       , "transformers"
       , "tuples"
+      , "typedenv"
       , "typelevel"
+      , "typelevel-prelude"
       ]
     , repo = "https://github.com/thought2/purescript-typescript-bridge.git"
-    , version = "8237232ab2120c89a1e94e053ebf9b24ab569267"
+    , version = "7325e11b599d043aa4ca898417cc804de5e48b60"
     }
   with node-glob-basic =
     { dependencies =
@@ -160,4 +70,67 @@ in  upstream
       ]
     , repo = "https://github.com/natefaubion/purescript-node-glob-basic.git"
     , version = "v1.2.2"
+    }
+  with record-extra =
+    { dependencies =
+      [ "arrays", "functions", "lists", "record", "typelevel-prelude" ]
+    , repo = "https://github.com/justinwoo/purescript-record-extra.git"
+    , version = "0.15.0-starter-kit"
+    }
+  with node-workerbees =
+    { dependencies =
+      [ "aff"
+      , "argonaut-core"
+      , "arraybuffer-types"
+      , "avar"
+      , "effect"
+      , "either"
+      , "exceptions"
+      , "maybe"
+      , "newtype"
+      , "parallel"
+      , "variant"
+      ]
+    , repo = "https://github.com/natefaubion/purescript-node-workerbees.git"
+    , version = "node-esm"
+    }
+  with tidy =
+    { dependencies =
+      [ "arrays"
+      , "control"
+      , "dodo-printer"
+      , "either"
+      , "foldable-traversable"
+      , "lists"
+      , "maybe"
+      , "newtype"
+      , "ordered-collections"
+      , "partial"
+      , "prelude"
+      , "language-cst-parser"
+      , "strings"
+      , "tuples"
+      ]
+    , repo = "https://github.com/natefaubion/purescript-tidy.git"
+    , version = "fa1c7c7b251341f3a22ca4e402f46614486878db"
+    }
+  with typedenv =
+    { dependencies =
+      [ "aff"
+      , "effect"
+      , "either"
+      , "foldable-traversable"
+      , "foreign-object"
+      , "integers"
+      , "maybe"
+      , "numbers"
+      , "prelude"
+      , "record"
+      , "spec"
+      , "strings"
+      , "type-equality"
+      , "typelevel-prelude"
+      ]
+    , repo = "https://github.com/thought2/purescript-typedenv.git"
+    , version = "purs15"
     }

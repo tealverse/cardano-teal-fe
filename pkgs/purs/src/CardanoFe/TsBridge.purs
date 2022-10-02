@@ -1,30 +1,19 @@
 module CardanoFe.TsBridge where
 
+import Prelude
+
+import Control.Promise (Promise)
 import Data.Either (Either)
 import Data.Maybe (Maybe)
+import Effect (Effect)
+import Effect.Aff (Aff)
 import Heterogeneous.Mapping (class Mapping)
 import Prim.RowList (class RowToList)
+import TsBridge (class GenRecord, A, B, C, TsBridgeM, TsType, defaultArray, defaultBoolean, defaultEffect, defaultFunction, defaultNumber, defaultProxy, defaultRecord, defaultString, defaultUnit, tsOpaqueType1, tsOpaqueType2, tsTypeVar)
 import Type.Proxy (Proxy)
-import TsBridge
-  ( class GenRecord
-  , A
-  , B
-  , C
-  , TsBridgeM
-  , TsType
-  )
-import TsBridge.Class
-  ( defaultArray
-  , defaultBoolean
-  , defaultFunction
-  , defaultNumber
-  , defaultProxy
-  , defaultRecord
-  , defaultString
-  , tsOpaqueType1
-  , tsOpaqueType2
-  , tsTypeVar
-  )
+
+moduleName :: String
+moduleName = "CardanoFe.TsBridge"
 
 class ToTsBridge a where
   toTsBridge :: a -> TsBridgeM TsType
@@ -38,8 +27,17 @@ instance ToTsBridge Number where
 instance ToTsBridge String where
   toTsBridge = defaultString
 
+instance ToTsBridge Unit where
+  toTsBridge = defaultUnit
+
 instance ToTsBridge Boolean where
   toTsBridge = defaultBoolean
+
+instance ToTsBridge a => ToTsBridge (Aff a) where
+  toTsBridge = tsOpaqueType1 MP moduleName "Aff" "A"
+
+instance ToTsBridge a => ToTsBridge (Effect a) where
+  toTsBridge = defaultEffect MP
 
 instance ToTsBridge a => ToTsBridge (Array a) where
   toTsBridge = defaultArray MP
@@ -49,6 +47,9 @@ instance (ToTsBridge a, ToTsBridge b) => ToTsBridge (a -> b) where
 
 instance (GenRecord MappingToTsBridge rl, RowToList r rl) => ToTsBridge (Record r) where
   toTsBridge = defaultRecord MP
+
+instance ToTsBridge a => ToTsBridge (Promise a) where
+  toTsBridge = tsOpaqueType1 MP "Control.Promise" "Promise" "A"
 
 instance ToTsBridge a => ToTsBridge (Maybe a) where
   toTsBridge = tsOpaqueType1 MP "Data.Maybe" "Maybe" "A"

@@ -9,7 +9,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Heterogeneous.Mapping (class Mapping)
 import Prim.RowList (class RowToList)
-import TsBridge (class GenRecord, A, B, C, TsBridgeM, TsType, defaultArray, defaultBoolean, defaultEffect, defaultFunction, defaultNumber, defaultProxy, defaultRecord, defaultString, defaultUnit, tsOpaqueType1, tsOpaqueType2, tsTypeVar)
+import TsBridge (class GenRecord, A, B, C, TsBridgeM, TsType, defaultArray, defaultBoolean, defaultEffect, defaultFunction, defaultNumber, defaultPromise, defaultProxy, defaultRecord, defaultString, defaultUnit, tsOpaqueType1, tsOpaqueType2, tsTypeVar)
 import Type.Proxy (Proxy)
 
 moduleName :: String
@@ -49,7 +49,7 @@ instance (GenRecord MappingToTsBridge rl, RowToList r rl) => ToTsBridge (Record 
   toTsBridge = defaultRecord MP
 
 instance ToTsBridge a => ToTsBridge (Promise a) where
-  toTsBridge = tsOpaqueType1 MP "Control.Promise" "Promise" "A"
+  toTsBridge = defaultPromise MP
 
 instance ToTsBridge a => ToTsBridge (Maybe a) where
   toTsBridge = tsOpaqueType1 MP "Data.Maybe" "Maybe" "A"

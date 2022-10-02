@@ -171,6 +171,9 @@ initWalletState w =
   , utxos: []
   }
 
+liftAffAppM :: forall a. Aff a -> AppM a
+liftAffAppM = liftAff
+
 main :: Effect Unit
 main = do
   log "Hello"

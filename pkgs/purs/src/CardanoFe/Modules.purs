@@ -24,9 +24,11 @@ myTsProgram =
         , tsValue MP "isWalletEnabled" CardanoFe.Main.isWalletEnabled
         , tsValue MP "runAppM" (CardanoFe.Main.runAppM :: _ A -> _)
         , tsTypeAlias MP "WalletState" (Proxy :: _ CardanoFe.Main.WalletState)
+        , tsValue MP "liftAffAppM" (CardanoFe.Main.liftAffAppM :: _ A -> _)
         ]
     , tsModuleFile "Control.Promise/index"
-        [ tsValue MP "fromAff" (Control.Promise.fromAff :: _ A -> _ (_ A))
+        [ tsValue MP "fromAff" (Control.Promise.fromAff :: _ A -> _)
+        , tsValue MP "toAff" (Control.Promise.toAff :: _ A -> _)
         ]
     ]
 

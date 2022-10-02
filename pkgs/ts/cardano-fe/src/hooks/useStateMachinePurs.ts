@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { AppState, control, initState, Msg, runAppM } from '~/CardanoFe.Main';
+import { AppState, control, initState, Msg, runAppM, liftAffAppM } from '~/CardanoFe.Main';
 import { pipe } from 'fp-ts/lib/function';
-import { fromAff } from '~/Control.Promise';
+import { fromAff, toAff } from '~/Control.Promise';
 
 type WrappedState = {
   state: AppState;
@@ -19,11 +19,14 @@ export const useStateMachine = (): [
 
   const act = async (msg: Msg) => {
     const controlMsg = control({
-      updateState: () => {
-        // console.log(`Updating State: ${state.state.tag}`, state.state.value);
-        // state.state = updateState(state.state);
-        // forceUpdate();
-        // setState(state);
+      updateState: updateState => {
+        const p: Promise<void> = new Promise((res) => {
+          // console.log(`Updating State: ${state.state.tag}`, state.state.value);
+          state.state = updateState(state.state);
+          forceUpdate();
+        });
+
+        return pipe(p, toAff, liftAffAppM)
       },
       getState: () => {},
     })(msg);

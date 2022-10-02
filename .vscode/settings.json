@@ -5,5 +5,6 @@
   "purescript.sourcePath": "pkgs/purs/src",
   "purescript.fastRebuild": true,
   "purescript.addNpmPath": true,
-  "purescript.outputDirectory": "pkgs/ts/cardano-fe/core"
+  "purescript.outputDirectory": "pkgs/ts/cardano-fe/core",
+  "purescript.censorWarnings": ["WildcardInferredType"]
 }

@@ -1,5 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import * as path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,6 +12,15 @@ export default defineConfig({
   esbuild: {
     // https://github.com/vitejs/vite/issues/8644#issuecomment-1159308803
     logOverride: { 'this-is-undefined-in-esm': 'silent' },
+  },
+  // vite.config.ts
+  resolve: {
+    alias: [
+      {
+        find: '~',
+        replacement: path.resolve(__dirname, 'pkgs/ts/cardano-fe/core'),
+      },
+    ],
   },
   plugins: [
     react({
@@ -34,4 +44,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+});

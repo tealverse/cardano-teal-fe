@@ -8,4 +8,4 @@ spago-build-ide:
 
 generate-types: spago-build
   rm -rf {{PURS_OUTPUT}}/*/*.d.ts;
-  node generate-types.js --output-dir {{PURS_OUTPUT}}
+  node --experimental-modules generate-types.mjs --output-dir {{PURS_OUTPUT}}

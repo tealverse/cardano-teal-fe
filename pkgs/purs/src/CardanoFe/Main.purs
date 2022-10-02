@@ -82,14 +82,21 @@ data Page
   | SelectWallet
 
 data AppState
-  = Login
-      { supportedWallets :: Array SupportedWallet
-      , unsupportedWallets :: Array UnsupportedWallet
-      , selectedWallet :: Maybe WalletState
-      }
+  = Login LoginState
   | App WalletState Page
 
+type LoginState =
+  { supportedWallets :: Array SupportedWallet
+  , unsupportedWallets :: Array UnsupportedWallet
+  , selectedWallet :: Maybe WalletState
+  }
+
 newtype AppM a = AppM (ExceptT AppError Aff a)
+
+unAppState :: { onLogin :: _, onApp :: _ } -> _
+unAppState { onLogin, onApp } = case _ of
+  Login x -> onLogin x
+  App x1 x2 -> onApp x1 x2
 
 initState :: AppState
 initState = Login
@@ -104,6 +111,9 @@ type AppEnv =
   { updateState :: (AppState -> AppState) -> AppM Unit
   , getState :: AppM AppState
   }
+
+mkMsg :: { getAvailableWallets :: _, setWallet :: _ }
+mkMsg = { getAvailableWallets: GetAvailableWallets, setWallet: SetWallet }
 
 control :: AppEnv -> Msg -> AppM Unit
 control { updateState, getState } msg =
@@ -194,6 +204,9 @@ instance ToTsBridge Utxo where
 
 instance ToTsBridge AppState where
   toTsBridge = tsOpaqueType moduleName "AppState"
+
+instance ToTsBridge Page where
+  toTsBridge = tsOpaqueType moduleName "Page"
 
 instance ToTsBridge Msg where
   toTsBridge = tsOpaqueType moduleName "Msg"

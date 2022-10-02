@@ -6,7 +6,7 @@ import CardanoFe.Main as CardanoFe.Main
 import CardanoFe.TsBridge (MappingToTsBridge(..))
 import Control.Promise as Control.Promise
 import Effect (Effect)
-import TsBridge (A, TsProgram, tsModuleFile, tsProgram, tsTypeAlias, tsValue)
+import TsBridge (A, TsProgram, Z, tsModuleFile, tsProgram, tsTypeAlias, tsValue)
 import TsBridge.Cli (mkTypeGenCli)
 import Type.Proxy (Proxy(..))
 
@@ -15,6 +15,7 @@ myTsProgram =
   tsProgram
     [ tsModuleFile "CardanoFe.Main/index"
         [ tsValue MP "control" CardanoFe.Main.control
+        , tsValue MP "unAppState" (CardanoFe.Main.unAppState :: _ -> _ -> Z)
         , tsValue MP "initState" CardanoFe.Main.initState
         , tsValue MP "initWalletState" CardanoFe.Main.initWalletState
         , tsValue MP "printWallet" CardanoFe.Main.printWallet
@@ -22,8 +23,10 @@ myTsProgram =
         , tsValue MP "getBrowserWallets" CardanoFe.Main.getBrowserWallets
         , tsValue MP "getSupportedWallets" CardanoFe.Main.getSupportedWallets
         , tsValue MP "isWalletEnabled" CardanoFe.Main.isWalletEnabled
+        , tsValue MP "mkMsg" CardanoFe.Main.mkMsg
         , tsValue MP "runAppM" (CardanoFe.Main.runAppM :: _ A -> _)
         , tsTypeAlias MP "WalletState" (Proxy :: _ CardanoFe.Main.WalletState)
+        , tsTypeAlias MP "LoginState" (Proxy :: _ CardanoFe.Main.LoginState)
         , tsValue MP "liftAffAppM" (CardanoFe.Main.liftAffAppM :: _ A -> _)
         ]
     , tsModuleFile "Control.Promise/index"

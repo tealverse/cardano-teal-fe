@@ -41,7 +41,7 @@ export const useStateMachine = (): [
               forceUpdate();
             }),
           ),
-        getState: promiseToAppM(new Promise(() => state.state)),
+        getState: promiseToAppM(new Promise((res) => res(state.state))),
       })(msg),
     )();
 

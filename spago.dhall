@@ -22,6 +22,7 @@ to generate this file without the comments in this block.
   , "either"
   , "heterogeneous"
   , "maybe"
+  , "now"
   , "prelude"
   , "strings"
   , "transformers"

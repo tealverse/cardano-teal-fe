@@ -3,7 +3,7 @@ module CardanoFe.Main where
 import Prelude
 
 import CardanoFe.TsBridge (class ToTsBridge, MappingToTsBridge(..))
-import Control.Monad.Error.Class (class MonadThrow, catchError, liftEither, try)
+import Control.Monad.Error.Class (class MonadThrow, liftEither, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
 import Control.Promise (Promise, toAffE)
 import Data.Array (foldM)
@@ -164,7 +164,7 @@ control { updateState, getState } msg =
           ( \updateRemoteReport ->
               updateState case _ of
                 StLogin s -> StLogin s
-                  { selectedWallet = updateRemoteReport s.selectedWallet 
+                  { selectedWallet = updateRemoteReport s.selectedWallet
                   }
                 st -> st
           )

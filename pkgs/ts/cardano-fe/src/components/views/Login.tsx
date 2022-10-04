@@ -1,4 +1,4 @@
-import { ReactElement, useEffect } from 'react';
+import React, { ReactElement, useEffect } from 'react';
 import {
   AppError,
   AppState,
@@ -14,6 +14,7 @@ import Button from '../Button';
 import { css, styled } from 'twin.macro';
 import * as _Maybe from '../../../core/Simple.Data.Maybe/index';
 import { pipe } from 'fp-ts/lib/function';
+import { unRemoteReport } from '~/Data.RemoteReport';
 
 type LoginProps = {
   state: LoginState;
@@ -37,6 +38,14 @@ export const Login = (props: LoginProps): ReactElement => {
           {...props}
         />
       ))}
+      <>
+        {unRemoteReport({
+          onNotAsked: () => 'notAsked',
+          onLoading: () => 'loading',
+          onFailure: () => 'failure',
+          onSuccess: () => 'success',
+        })(state.selectedWallet)}
+      </>
     </div>
   );
 };

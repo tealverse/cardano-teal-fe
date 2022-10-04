@@ -3,17 +3,16 @@ module CardanoFe.TsBridge where
 import Prelude
 
 import Control.Promise (Promise)
+import Data.DateTime.Instant (Instant)
 import Data.Either (Either)
 import Data.Maybe (Maybe)
+import Data.RemoteReport (RemoteReport)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Heterogeneous.Mapping (class Mapping)
 import Prim.RowList (class RowToList)
-import TsBridge (class GenRecord, A, B, C, TsBridgeM, TsType, Z, defaultArray, defaultBoolean, defaultEffect, defaultFunction, defaultNumber, defaultPromise, defaultProxy, defaultRecord, defaultString, defaultUnit, tsOpaqueType1, tsOpaqueType2, tsTypeVar)
+import TsBridge (class GenRecord, A, B, C, D, E, TsBridgeM, TsType, Z, defaultArray, defaultBoolean, defaultEffect, defaultFunction, defaultNumber, defaultPromise, defaultProxy, defaultRecord, defaultString, defaultUnit, tsOpaqueType, tsOpaqueType1, tsOpaqueType2, tsTypeVar)
 import Type.Proxy (Proxy)
-
-moduleName :: String
-moduleName = "CardanoFe.TsBridge"
 
 class ToTsBridge a where
   toTsBridge :: a -> TsBridgeM TsType
@@ -34,7 +33,13 @@ instance ToTsBridge Boolean where
   toTsBridge = defaultBoolean
 
 instance ToTsBridge a => ToTsBridge (Aff a) where
-  toTsBridge = tsOpaqueType1 MP moduleName "Aff" "A"
+  toTsBridge = tsOpaqueType1 MP "Data.Aff" "Aff" "A"
+
+instance ToTsBridge Instant where
+  toTsBridge = tsOpaqueType "Effect.Aff" "Instant"
+
+instance (ToTsBridge e, ToTsBridge a) => ToTsBridge (RemoteReport e a) where
+  toTsBridge = tsOpaqueType2 MP "Data.RemoteReport" "RemoteReport" "E" "A"
 
 instance ToTsBridge a => ToTsBridge (Effect a) where
   toTsBridge = defaultEffect MP
@@ -65,6 +70,12 @@ instance ToTsBridge B where
 
 instance ToTsBridge C where
   toTsBridge _ = tsTypeVar "C"
+
+instance ToTsBridge D where
+  toTsBridge _ = tsTypeVar "D"
+
+instance ToTsBridge E where
+  toTsBridge _ = tsTypeVar "E"
 
 --
 

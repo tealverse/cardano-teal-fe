@@ -15,20 +15,17 @@ data RemoteReport e a
   = NotAsked
   | Loading
       { timestamp :: Instant
-      --, retry :: Int
       , previousData :: Maybe a
       }
   | Failure
       { error :: e
       , timestamp :: Instant
-      --, retry :: Int
       , previousData :: Maybe a
       }
   | Success
       { data :: a
       , previousData :: Maybe a
       , timestamp :: Instant
-      --, retry :: Int
       }
 
 derive instance Functor (RemoteReport e)

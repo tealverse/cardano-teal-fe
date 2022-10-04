@@ -94,6 +94,11 @@ data Page
   = PageDashboard
   | PageSelectWallet
 
+unPage :: { onPageDashboard :: _, onPageSelectWallet :: _ } -> _
+unPage { onPageDashboard, onPageSelectWallet } = case _ of
+  PageDashboard -> onPageDashboard unit
+  PageSelectWallet -> onPageSelectWallet unit
+
 data AppState
   = StLogin LoginState
   | StApp WalletState Page
@@ -101,7 +106,6 @@ data AppState
 type LoginState =
   { supportedWallets :: Array SupportedWallet
   , unsupportedWallets :: Array UnsupportedWallet
-  , selectedWallet :: Maybe WalletState
   }
 
 newtype AppM a = AppM (ExceptT AppError Aff a)
@@ -115,7 +119,6 @@ initState :: AppState
 initState = StLogin
   { supportedWallets: []
   , unsupportedWallets: []
-  , selectedWallet: Nothing
   }
 
 data Msg = MsgGetAvailableWallets | MsgSelectWallet Wallet
@@ -147,9 +150,7 @@ control { updateState, getState } msg =
       StLogin _, MsgSelectWallet w -> do
         _ <- getWalletApi w
         updateState case _ of
-          StLogin ls -> StLogin ls
-            { selectedWallet = Just $ initWalletState w
-            }
+          StLogin _ -> StApp (initWalletState w) PageDashboard
           st -> st
 
       _, _ -> pure unit

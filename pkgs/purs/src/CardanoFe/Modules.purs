@@ -29,6 +29,7 @@ myTsProgram =
         , tsTypeAlias MP "WalletState" (Proxy :: _ CardanoFe.Main.WalletState)
         , tsTypeAlias MP "LoginState" (Proxy :: _ CardanoFe.Main.LoginState)
         , tsValue MP "liftAffAppM" (CardanoFe.Main.liftAffAppM :: _ A -> _)
+        , tsValue MP "unPage" (CardanoFe.Main.unPage :: _ -> _ -> Z)
         ]
     , tsModuleFile "Control.Promise/index"
         [ tsValue MP "fromAff" (Control.Promise.fromAff :: _ A -> _)

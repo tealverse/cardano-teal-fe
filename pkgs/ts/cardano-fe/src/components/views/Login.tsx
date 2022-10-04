@@ -12,7 +12,7 @@ import { CenterTitle } from '../text';
 import { Either } from '~/Data.Either';
 import Button from '../Button';
 import { css, styled } from 'twin.macro';
-import * as _Maybe from '../../../core/Simple.Data.Maybe/index.d';
+import * as _Maybe from '../../../core/Simple.Data.Maybe/index';
 import { pipe } from 'fp-ts/lib/function';
 
 type LoginProps = {
@@ -37,15 +37,6 @@ export const Login = (props: LoginProps): ReactElement => {
           {...props}
         />
       ))}
-      <pre>
-        {pipe(
-          state.selectedWallet,
-          _Maybe.unMaybe({
-            onJust: x => printWallet(x.type),
-            onNothing: () => null,
-          }),
-        )}
-      </pre>
     </div>
   );
 };

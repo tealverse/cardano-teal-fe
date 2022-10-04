@@ -18,6 +18,7 @@ to generate this file without the comments in this block.
   , "bifunctors"
   , "console"
   , "datetime"
+  , "debug"
   , "effect"
   , "either"
   , "heterogeneous"

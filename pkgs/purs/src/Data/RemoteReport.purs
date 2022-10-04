@@ -10,22 +10,26 @@ import Prelude
 import Control.Monad.Error.Class (class MonadError, catchError)
 import Data.DateTime.Instant (Instant)
 import Data.Maybe (Maybe(..))
+import Debug (spy)
 
 data RemoteReport e a
   = NotAsked
   | Loading
       { timestamp :: Instant
+      --, retry :: Int
       , previousData :: Maybe a
       }
   | Failure
       { error :: e
       , timestamp :: Instant
+      --, retry :: Int
       , previousData :: Maybe a
       }
   | Success
       { data :: a
       , previousData :: Maybe a
       , timestamp :: Instant
+      --, retry :: Int
       }
 
 derive instance Functor (RemoteReport e)

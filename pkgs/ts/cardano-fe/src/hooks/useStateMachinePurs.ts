@@ -8,6 +8,7 @@ import {
   liftAffAppM,
   AppM,
   AppError,
+  liftEffectAppM,
 } from '~/CardanoFe.Main';
 import { pipe } from 'fp-ts/lib/function';
 import { fromAff, toAff } from '~/Control.Promise';
@@ -17,7 +18,7 @@ type WrappedState = {
   state: AppState;
 };
 
-const promiseToAppM = <A>(p: Promise<A>) => pipe(p, toAff, liftAffAppM);
+//const promiseToAppM = <A>(p: Promise<A>) => pipe(p, toAff, liftAffAppM);
 
 const appMToPromise = <A>(appM: AppM<A>) => pipe(appM, runAppM, fromAff);
 
@@ -35,13 +36,13 @@ export const useStateMachine = (): [
     appMToPromise(
       control({
         updateState: updateState =>
-          promiseToAppM(
-            new Promise(() => {
+          liftEffectAppM(
+            () => {
               state.state = updateState(state.state);
               forceUpdate();
-            }),
+            },
           ),
-        getState: promiseToAppM(new Promise((res) => res(state.state))),
+        getState: liftEffectAppM(() => state.state),
       })(msg),
     )();
 

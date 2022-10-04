@@ -161,14 +161,16 @@ control { updateState, getState } msg =
 
       StLogin _, MsgSelectWallet w -> do
         _ <- subscibeRemoteReport
-          ( \updateRemoteReport ->
+          ( \updateRemoteReport -> do
               updateState case _ of
                 StLogin s -> StLogin s
                   { selectedWallet = updateRemoteReport s.selectedWallet
                   }
                 st -> st
+              pure unit
           )
           (getWalletApi w <#> \_ -> initWalletState w)
+
 
         updateState case _ of
           StLogin _ -> StApp (initWalletState w) PageDashboard
@@ -227,6 +229,9 @@ main = do
 runAppM :: forall a. AppM a -> Aff (Either AppError a)
 runAppM (AppM ma) = runExceptT ma
 
+-- runAppMEffect :: forall a. AppM a -> Effect Unit
+-- runAppMEffect (AppM ma) = runExceptT ma # launchAff_
+
 liftPromise :: forall a. (Error -> AppError) -> Effect (Promise a) -> AppM a
 liftPromise mapErr f = f
   # toAffE
@@ -237,6 +242,10 @@ liftPromise mapErr f = f
 
 liftAffAppM :: forall a. Aff a -> AppM a
 liftAffAppM = liftAff
+
+liftEffectAppM :: forall a. Effect a -> AppM a
+liftEffectAppM = liftEffect
+
 
 --
 

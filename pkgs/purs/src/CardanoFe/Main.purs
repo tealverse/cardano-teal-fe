@@ -3,14 +3,17 @@ module CardanoFe.Main where
 import Prelude
 
 import CardanoFe.TsBridge (class ToTsBridge, MappingToTsBridge(..))
-import Control.Monad.Error.Class (class MonadThrow, liftEither, try)
+import Control.Monad.Error.Class (class MonadThrow, catchError, liftEither, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
 import Control.Promise (Promise, toAffE)
 import Data.Array (foldM)
 import Data.Bifunctor (lmap)
+import Data.DateTime.Instant (Instant)
 import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
+import Data.RemoteReport (RemoteReport(..))
+import Data.RemoteReport as RR
 import Data.Show.Generic (genericShow)
 import Data.String as Str
 import Effect (Effect)
@@ -18,6 +21,7 @@ import Effect.Aff (Aff, Error)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console (log)
+import Effect.Now as I
 import TsBridge (tsOpaqueType, tsOpaqueType1)
 
 moduleName :: String
@@ -106,6 +110,7 @@ data AppState
 type LoginState =
   { supportedWallets :: Array SupportedWallet
   , unsupportedWallets :: Array UnsupportedWallet
+  , selectedWallet :: RemoteReport AppError WalletState
   }
 
 newtype AppM a = AppM (ExceptT AppError Aff a)
@@ -119,6 +124,7 @@ initState :: AppState
 initState = StLogin
   { supportedWallets: []
   , unsupportedWallets: []
+  , selectedWallet: NotAsked
   }
 
 data Msg = MsgGetAvailableWallets | MsgSelectWallet Wallet
@@ -130,6 +136,12 @@ type AppEnv =
 
 mkMsg :: { getAvailableWallets :: _, selectWallet :: _ }
 mkMsg = { getAvailableWallets: MsgGetAvailableWallets, selectWallet: MsgSelectWallet }
+
+now :: AppM Instant
+now = liftEffect I.now
+
+subscibeRemoteReport :: forall a. ((RemoteReport AppError a -> RemoteReport AppError a) -> AppM Unit) -> AppM a -> AppM Unit
+subscibeRemoteReport = RR.subscibeRemoteReport now
 
 control :: AppEnv -> Msg -> AppM Unit
 control { updateState, getState } msg =
@@ -148,7 +160,16 @@ control { updateState, getState } msg =
           st -> st
 
       StLogin _, MsgSelectWallet w -> do
-        _ <- getWalletApi w
+        _ <- subscibeRemoteReport
+          ( \updateRemoteReport ->
+              updateState case _ of
+                StLogin s -> StLogin s
+                  { selectedWallet = updateRemoteReport s.selectedWallet 
+                  }
+                st -> st
+          )
+          (getWalletApi w <#> \_ -> initWalletState w)
+
         updateState case _ of
           StLogin _ -> StApp (initWalletState w) PageDashboard
           st -> st

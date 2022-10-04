@@ -171,7 +171,6 @@ control { updateState, getState } msg =
           )
           (getWalletApi w <#> \_ -> initWalletState w)
 
-
         updateState case _ of
           StLogin _ -> StApp (initWalletState w) PageDashboard
           st -> st
@@ -245,7 +244,6 @@ liftAffAppM = liftAff
 
 liftEffectAppM :: forall a. Effect a -> AppM a
 liftEffectAppM = liftEffect
-
 
 --
 

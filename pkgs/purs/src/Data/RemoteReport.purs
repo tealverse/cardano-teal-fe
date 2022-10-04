@@ -10,7 +10,6 @@ import Prelude
 import Control.Monad.Error.Class (class MonadError, catchError)
 import Data.DateTime.Instant (Instant)
 import Data.Maybe (Maybe(..))
-import Debug (spy)
 
 data RemoteReport e a
   = NotAsked

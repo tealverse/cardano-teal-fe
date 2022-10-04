@@ -1,7 +1,7 @@
 export const isWalletEnabledImpl = walletName =>
   window.cardano && window.cardano[walletName]
-    ? Promise.reject()
-    : window.cardano[walletName].isEnabled();
+    ? window.cardano[walletName].isEnabled()
+    : Promise.reject();
 
 export const getBrowserWalletsImpl = () =>
   window.cardano ? Object.keys(window.cardano) : [];
@@ -9,5 +9,5 @@ export const getBrowserWalletsImpl = () =>
 // TODO: check if checks are necessary
 export const getWalletApiImpl = walletName =>
   window.cardano && window.cardano[walletName]
-    ? Promise.reject()
-    : window.cardano[walletName].enable();
+    ? window.cardano[walletName].enable()
+    : Promise.reject();

@@ -6,7 +6,8 @@ import CardanoFe.Main as CardanoFe.Main
 import CardanoFe.TsBridge (MappingToTsBridge(..))
 import Control.Promise as Control.Promise
 import Effect (Effect)
-import TsBridge (A, TsProgram, Z, tsModuleFile, tsProgram, tsTypeAlias, tsValue)
+import Simple.Data.Maybe as Simple.Data.Maybe
+import TsBridge (A, C, TsProgram, Z, tsModuleFile, tsProgram, tsTypeAlias, tsValue)
 import TsBridge.Cli (mkTypeGenCli)
 import Type.Proxy (Proxy(..))
 
@@ -32,6 +33,10 @@ myTsProgram =
     , tsModuleFile "Control.Promise/index"
         [ tsValue MP "fromAff" (Control.Promise.fromAff :: _ A -> _)
         , tsValue MP "toAff" (Control.Promise.toAff :: _ A -> _)
+        ]
+    , tsModuleFile "Simple.Data.Maybe/index"
+        [ tsValue MP "unMaybe" (Simple.Data.Maybe.unMaybe :: _ -> _ A -> C)
+        , tsValue MP "mkMaybe" (Simple.Data.Maybe.mkMaybe :: { mkJust :: A -> _, mkNothing :: _ })
         ]
     ]
 

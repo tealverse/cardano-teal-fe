@@ -6,30 +6,74 @@ import {
   mkMsg,
   LoginState,
   printWallet,
+  Wallet,
 } from '~/CardanoFe.Main';
 import { CenterTitle } from '../text';
 import { Either } from '~/Data.Either';
+import Button from '../Button';
+import { css, styled } from 'twin.macro';
+import * as _Maybe from '../../../core/Simple.Data.Maybe/index.d';
+import { pipe } from 'fp-ts/lib/function';
 
 type LoginProps = {
   state: LoginState;
   act: (msg: Msg) => Promise<Either<AppError, void>>;
 };
 
-export const Login = ({ state, act }: LoginProps): ReactElement => {
+export const Login = (props: LoginProps): ReactElement => {
+  const { state, act } = props;
+
   useEffect(() => {
     act(mkMsg.getAvailableWallets);
   }, []);
-
-  console.log(state);
 
   return (
     <div>
       <CenterTitle>Landing</CenterTitle>
       {state.supportedWallets.map(w => (
-        <div key={printWallet(w.wallet)}>
-          <h2>{printWallet(w.wallet)} </h2>
-        </div>
+        <WalletSelector
+          wallet={w.wallet}
+          key={printWallet(w.wallet)}
+          {...props}
+        />
       ))}
+      <pre>
+        {pipe(
+          state.selectedWallet,
+          _Maybe.unMaybe({
+            onJust: x => printWallet(x.type),
+            onNothing: () => null,
+          }),
+        )}
+      </pre>
     </div>
   );
 };
+
+type WalletSelectorProps = {
+  wallet: Wallet;
+} & LoginProps;
+
+export const WalletSelector = ({ wallet, act }: WalletSelectorProps) => {
+  return (
+    <SelectorRow>
+      <h2>{printWallet(wallet)}</h2>
+      <div>
+        <Button
+          variant="primary"
+          onClick={() => act(mkMsg.selectWallet(wallet))}
+        >
+          Enable
+        </Button>
+      </div>
+    </SelectorRow>
+  );
+};
+
+const SelectorRow = styled.div(() => [
+  css`
+    display: flex;
+    width: 15rem;
+    justify-content: space-between;
+  `,
+]);

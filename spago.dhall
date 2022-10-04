@@ -17,6 +17,7 @@ to generate this file without the comments in this block.
   , "arrays"
   , "bifunctors"
   , "console"
+  , "datetime"
   , "effect"
   , "either"
   , "heterogeneous"
@@ -24,6 +25,7 @@ to generate this file without the comments in this block.
   , "prelude"
   , "strings"
   , "transformers"
+  , "tuples"
   , "typescript-bridge"
   ]
 , packages = ./packages.dhall

@@ -5,7 +5,7 @@ import Prelude
 import CardanoFe.TsBridge (class ToTsBridge, MappingToTsBridge(..))
 import Control.Monad.Error.Class (class MonadThrow, liftEither, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
-import Control.Promise (Promise, toAff, toAffE)
+import Control.Promise (Promise, toAffE)
 import Data.Array (foldM)
 import Data.Bifunctor (lmap)
 import Data.Either (Either)
@@ -13,7 +13,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String as Str
-import Data.Typelevel.Undefined (undefined)
 import Effect (Effect)
 import Effect.Aff (Aff, Error)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -146,8 +145,7 @@ control { updateState, getState } msg =
           st -> st
 
       StLogin _, MsgSelectWallet w -> do
-        api <- getWalletApi w
-        balance <- api.getBalance
+        _ <- getWalletApi w
         updateState case _ of
           StLogin ls -> StLogin ls
             { selectedWallet = Just $ initWalletState w

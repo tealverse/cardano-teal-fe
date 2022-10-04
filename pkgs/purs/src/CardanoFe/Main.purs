@@ -5,7 +5,7 @@ import Prelude
 import CardanoFe.TsBridge (class ToTsBridge, MappingToTsBridge(..))
 import Control.Monad.Error.Class (class MonadThrow, liftEither, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
-import Control.Promise (Promise, toAff)
+import Control.Promise (Promise, toAff, toAffE)
 import Data.Array (foldM)
 import Data.Bifunctor (lmap)
 import Data.Either (Either)
@@ -13,8 +13,9 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String as Str
+import Data.Typelevel.Undefined (undefined)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, Error)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Console (log)
@@ -30,6 +31,20 @@ data Wallet
   | Nami
   | Flint
   | Begin
+
+type WalletApi =
+  { getBalance :: AppM String
+  }
+
+type WalletApiImpl =
+  { getBalance :: Effect (Promise String)
+  }
+
+convertWalletApi :: WalletApiImpl -> WalletApi
+convertWalletApi wai = { getBalance: liftPromise wai.getBalance mapError }
+
+mapError :: Error -> AppError
+mapError = undefined
 
 parseWallet :: String -> Maybe Wallet
 parseWallet = case _ of
@@ -50,7 +65,6 @@ type UnsupportedWallet =
 
 type SupportedWallet =
   { wallet :: Wallet
-  , enabled :: Boolean
   }
 
 newtype Balance = Balance Int
@@ -78,12 +92,12 @@ type WalletState =
   }
 
 data Page
-  = Dashboard
-  | SelectWallet
+  = PageDashboard
+  | PageSelectWallet
 
 data AppState
-  = Login LoginState
-  | App WalletState Page
+  = StLogin LoginState
+  | StApp WalletState Page
 
 type LoginState =
   { supportedWallets :: Array SupportedWallet
@@ -95,25 +109,25 @@ newtype AppM a = AppM (ExceptT AppError Aff a)
 
 unAppState :: { onLogin :: _, onApp :: _ } -> _
 unAppState { onLogin, onApp } = case _ of
-  Login x -> onLogin x
-  App x1 x2 -> onApp x1 x2
+  StLogin x -> onLogin x
+  StApp x1 x2 -> onApp x1 x2
 
 initState :: AppState
-initState = Login
+initState = StLogin
   { supportedWallets: []
   , unsupportedWallets: []
   , selectedWallet: Nothing
   }
 
-data Msg = GetAvailableWallets | SetWallet Wallet
+data Msg = MsgGetAvailableWallets | MsgSelectWallet Wallet
 
 type AppEnv =
   { updateState :: (AppState -> AppState) -> AppM Unit
   , getState :: AppM AppState
   }
 
-mkMsg :: { getAvailableWallets :: _, setWallet :: _ }
-mkMsg = { getAvailableWallets: GetAvailableWallets, setWallet: SetWallet }
+mkMsg :: { getAvailableWallets :: _, selectWallet :: _ }
+mkMsg = { getAvailableWallets: MsgGetAvailableWallets, selectWallet: MsgSelectWallet }
 
 control :: AppEnv -> Msg -> AppM Unit
 control { updateState, getState } msg =
@@ -121,19 +135,19 @@ control { updateState, getState } msg =
     state <- getState
 
     case state, msg of
-      Login _, GetAvailableWallets -> do
+      StLogin _, MsgGetAvailableWallets -> do
         browserWallets <- getBrowserWallets
         result <- getSupportedWallets browserWallets
         updateState case _ of
-          Login ls -> Login ls
+          StLogin ls -> StLogin ls
             { supportedWallets = result.supportedWallets
             , unsupportedWallets = result.unsupportedWallets
             }
           st -> st
 
-      Login _, SetWallet w -> do
+      StLogin _, MsgSelectWallet w -> do
         updateState case _ of
-          Login ls -> Login ls
+          StLogin ls -> StLogin ls
             { selectedWallet = Just $ initWalletState w
             }
           st -> st
@@ -156,12 +170,7 @@ getSupportedWallets = foldM reducer { supportedWallets: [], unsupportedWallets: 
   reducer accum uw =
     case parseWallet uw.walletName of
       Nothing -> pure $ accum { unsupportedWallets = accum.unsupportedWallets <> [ uw ] }
-      Just wallet -> do
-        enabled <- isWalletEnabled $ printWallet wallet
-        pure $ accum { supportedWallets = accum.supportedWallets <> [ { enabled, wallet } ] }
-
-runAppM :: forall a. AppM a -> Aff (Either AppError a)
-runAppM (AppM ma) = runExceptT ma
+      Just wallet -> pure $ accum { supportedWallets = accum.supportedWallets <> [ { wallet } ] }
 
 isWalletEnabled :: String -> AppM Boolean
 isWalletEnabled str = isWalletEnabledImpl str
@@ -181,12 +190,25 @@ initWalletState w =
   , utxos: []
   }
 
-liftAffAppM :: forall a. Aff a -> AppM a
-liftAffAppM = liftAff
-
 main :: Effect Unit
 main = do
   log "Hello"
+
+--
+
+runAppM :: forall a. AppM a -> Aff (Either AppError a)
+runAppM (AppM ma) = runExceptT ma
+
+liftPromise :: forall a. Effect (Promise a) -> (Error -> AppError) -> AppM a
+liftPromise f mapErr = f
+  # toAffE
+  # try
+  <#> lmap mapErr
+  # liftAffAppM
+  >>= liftEither
+
+liftAffAppM :: forall a. Aff a -> AppM a
+liftAffAppM = liftAff
 
 --
 
@@ -236,3 +258,4 @@ foreign import isWalletEnabledImpl :: String -> Promise Boolean
 
 foreign import getBrowserWalletsImpl :: Effect (Array String)
 
+foreign import getWalletApiImpl :: String -> Promise WalletApiImpl

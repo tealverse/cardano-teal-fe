@@ -25,9 +25,9 @@ export const Login = ({ state, act }: LoginProps): ReactElement => {
   return (
     <div>
       <CenterTitle>Landing</CenterTitle>
-      {state.supportedWallets.map(wallet => (
-        <div>
-          <h2>{printWallet(wallet.wallet)}</h2>
+      {state.supportedWallets.map(w => (
+        <div key={printWallet(w.wallet)}>
+          <h2>{printWallet(w.wallet)} </h2>
         </div>
       ))}
     </div>

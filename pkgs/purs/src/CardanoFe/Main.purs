@@ -41,10 +41,7 @@ type WalletApiImpl =
   }
 
 convertWalletApi :: WalletApiImpl -> WalletApi
-convertWalletApi wai = { getBalance: liftPromise wai.getBalance mapError }
-
-mapError :: Error -> AppError
-mapError = undefined
+convertWalletApi wai = { getBalance: liftPromise (\_ -> ErrGetBalance) wai.getBalance }
 
 parseWallet :: String -> Maybe Wallet
 parseWallet = case _ of
@@ -81,6 +78,9 @@ data AppError
   = ErrWalletNotFound String
   | ErrHttp
   | ErrUnknown
+  | ErrLiteral String
+  | ErrGetBalance
+  | ErrGetWalletApi Wallet
 
 type WalletState =
   { type :: Wallet
@@ -146,6 +146,8 @@ control { updateState, getState } msg =
           st -> st
 
       StLogin _, MsgSelectWallet w -> do
+        api <- getWalletApi w
+        balance <- api.getBalance
         updateState case _ of
           StLogin ls -> StLogin ls
             { selectedWallet = Just $ initWalletState w
@@ -153,6 +155,14 @@ control { updateState, getState } msg =
           st -> st
 
       _, _ -> pure unit
+
+getWalletApi :: Wallet -> AppM WalletApi
+getWalletApi wallet = wallet
+  # printWallet
+  # getWalletApiImpl
+  # pure
+  # liftPromise (\_ -> ErrGetWalletApi wallet)
+  <#> convertWalletApi
 
 getBrowserWallets :: AppM (Array UnsupportedWallet)
 getBrowserWallets = getBrowserWalletsImpl
@@ -173,12 +183,10 @@ getSupportedWallets = foldM reducer { supportedWallets: [], unsupportedWallets: 
       Just wallet -> pure $ accum { supportedWallets = accum.supportedWallets <> [ { wallet } ] }
 
 isWalletEnabled :: String -> AppM Boolean
-isWalletEnabled str = isWalletEnabledImpl str
-  # toAff
-  # try
-  <#> lmap (\_ -> ErrWalletNotFound str)
-  # liftAff
-  >>= liftEither
+isWalletEnabled str = str
+  # isWalletEnabledImpl
+  # pure
+  # liftPromise (\_ -> ErrWalletNotFound str)
 
 initWalletState :: Wallet -> WalletState
 initWalletState w =
@@ -199,8 +207,8 @@ main = do
 runAppM :: forall a. AppM a -> Aff (Either AppError a)
 runAppM (AppM ma) = runExceptT ma
 
-liftPromise :: forall a. Effect (Promise a) -> (Error -> AppError) -> AppM a
-liftPromise f mapErr = f
+liftPromise :: forall a. (Error -> AppError) -> Effect (Promise a) -> AppM a
+liftPromise mapErr f = f
   # toAffE
   # try
   <#> lmap mapErr
@@ -259,3 +267,4 @@ foreign import isWalletEnabledImpl :: String -> Promise Boolean
 foreign import getBrowserWalletsImpl :: Effect (Array String)
 
 foreign import getWalletApiImpl :: String -> Promise WalletApiImpl
+

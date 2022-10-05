@@ -28,6 +28,7 @@ to generate this file without the comments in this block.
   , "strings"
   , "transformers"
   , "tuples"
+  , "typelevel"
   , "typescript-bridge"
   ]
 , packages = ./packages.dhall

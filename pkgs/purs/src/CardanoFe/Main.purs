@@ -16,6 +16,7 @@ import Data.RemoteReport as RR
 import Data.Show.Generic (genericShow)
 import Data.String as Str
 import Data.Typelevel.Undefined (undefined)
+import Debug (spy)
 import Effect (Effect)
 import Effect.Aff (Aff, Error)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -35,17 +36,17 @@ data WalletId
   | Begin
 
 type WalletApi =
-  { getBalance :: AppM (Maybe Lovelace)
+  { getBalance :: AppM Lovelace
   }
 
 type WalletApiImpl =
-  { getBalance :: Effect (Promise String)
+  { getBalance :: Effect (Promise AdaRaw)
   }
 
 convertWalletApi :: WalletApiImpl -> WalletApi
 convertWalletApi wai =
   { getBalance:
-      parseLovelace <$> liftPromise (\_ -> ErrGetBalance) wai.getBalance
+      adaRawToLovelace <$> liftPromise (\_ -> ErrGetBalance) wai.getBalance
   }
 
 parseWallet :: String -> Maybe WalletId
@@ -93,8 +94,9 @@ initWallet w =
 
 newtype Lovelace = Lovelace Int
 
-parseLovelace :: String -> Maybe Lovelace
-parseLovelace = undefined
+newtype AdaRaw = AdaRaw String
+
+foreign import adaRawToLovelace :: AdaRaw -> Lovelace
 
 newtype Address = Address String
 
@@ -194,7 +196,7 @@ control { updateState, getState } msg =
             , unsupportedWallets = result.unsupportedWallets
             }
           st -> st
-
+ 
       StLogin _, MsgSelectWallet w -> do
         _ <- subscibeRemoteReport
           ( \updateRemoteReport -> do
@@ -212,11 +214,17 @@ control { updateState, getState } msg =
           st -> st
 
       StApp wallet _, MsgSyncWallet -> do
+        let _ = spy "a" 1 
+        
         api <- getWalletApi wallet.type
+        let _ = spy "b" api 
+        
         balance <- api.getBalance
 
+        let _ = spy "c" 1 
+
         updateState case _ of
-          StApp wallet' page' -> StApp wallet' { balance = balance } page'
+          StApp wallet' page' -> StApp wallet' { balance = Just $ balance } page'
           st -> st
 
         pure unit

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { pipe } from 'fp-ts/lib/function';
 import {
   AppError,
   AppState,
+  mkMsg,
   Msg,
   Page,
   printWallet,
@@ -22,6 +23,10 @@ type CardanoAppProps = {
 
 export const CardanoApp = ({ state, act }: CardanoAppProps) => {
   const [wallet, page] = state;
+
+  useEffect(() => {
+    act(mkMsg.syncWallet)
+  }, [wallet])
 
   return (
     <AppLayout>

@@ -1,0 +1,1 @@
+import('./pkgs/ts/cardano-fe/core/CardanoFe.Modules/index.js').then(x => x.main())

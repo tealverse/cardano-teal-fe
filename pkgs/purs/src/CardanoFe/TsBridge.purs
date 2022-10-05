@@ -2,6 +2,7 @@ module CardanoFe.TsBridge where
 
 import Prelude
 
+import CardanoFe.Main (Address, AppError, AppM, AppState, Balance, Msg, Page, Utxo, WalletId)
 import Control.Promise (Promise)
 import Data.DateTime.Instant (Instant)
 import Data.Either (Either)
@@ -61,6 +62,33 @@ instance ToTsBridge a => ToTsBridge (Maybe a) where
 
 instance (ToTsBridge a, ToTsBridge b) => ToTsBridge (Either a b) where
   toTsBridge = tsOpaqueType2 MP "Data.Either" "Either" "A" "B"
+
+instance ToTsBridge WalletId where
+  toTsBridge = tsOpaqueType "CardanoFe.Main" "WalletId"
+
+instance ToTsBridge Balance where
+  toTsBridge = tsOpaqueType "CardanoFe.Main" "Balance"
+
+instance ToTsBridge Address where
+  toTsBridge = tsOpaqueType "CardanoFe.Main" "Address"
+
+instance ToTsBridge Utxo where
+  toTsBridge = tsOpaqueType "CardanoFe.Main" "Utxo"
+
+instance ToTsBridge AppState where
+  toTsBridge = tsOpaqueType "CardanoFe.Main" "AppState"
+
+instance ToTsBridge Page where
+  toTsBridge = tsOpaqueType "CardanoFe.Main" "Page"
+
+instance ToTsBridge Msg where
+  toTsBridge = tsOpaqueType "CardanoFe.Main" "Msg"
+
+instance ToTsBridge a => ToTsBridge (AppM a) where
+  toTsBridge = tsOpaqueType1 MP "CardanoFe.Main" "AppM" "A"
+
+instance ToTsBridge AppError where
+  toTsBridge = tsOpaqueType "CardanoFe.Main" "AppError"
 
 instance ToTsBridge A where
   toTsBridge _ = tsTypeVar "A"

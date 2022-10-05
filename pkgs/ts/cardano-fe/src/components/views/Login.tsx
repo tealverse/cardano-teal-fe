@@ -13,8 +13,8 @@ import { Either } from '~/Data.Either';
 import Button from '../Button';
 import { css, styled } from 'twin.macro';
 import * as _Maybe from '../../../core/Simple.Data.Maybe/index';
-import { pipe } from 'fp-ts/lib/function';
 import { unRemoteReport } from '~/Data.RemoteReport';
+import { WalletSwitcher } from '../WalletSwitcher';
 
 type LoginProps = {
   state: LoginState;
@@ -31,13 +31,10 @@ export const Login = (props: LoginProps): ReactElement => {
   return (
     <div>
       <CenterTitle>Landing</CenterTitle>
-      {state.supportedWallets.map(w => (
-        <WalletSelector
-          wallet={w.wallet}
-          key={printWallet(w.wallet)}
-          {...props}
-        />
-      ))}
+      <WalletSwitcher
+        supportedWallets={state.supportedWallets}
+        selectWallet={w => act(mkMsg.selectWallet(w))}
+      />
       <>
         {unRemoteReport({
           onNotAsked: () => 'notAsked',
@@ -49,31 +46,3 @@ export const Login = (props: LoginProps): ReactElement => {
     </div>
   );
 };
-
-type WalletSelectorProps = {
-  wallet: Wallet;
-} & LoginProps;
-
-export const WalletSelector = ({ wallet, act }: WalletSelectorProps) => {
-  return (
-    <SelectorRow>
-      <h2>{printWallet(wallet)}</h2>
-      <div>
-        <Button
-          variant="primary"
-          onClick={() => act(mkMsg.selectWallet(wallet))}
-        >
-          Enable
-        </Button>
-      </div>
-    </SelectorRow>
-  );
-};
-
-const SelectorRow = styled.div(() => [
-  css`
-    display: flex;
-    width: 15rem;
-    justify-content: space-between;
-  `,
-]);

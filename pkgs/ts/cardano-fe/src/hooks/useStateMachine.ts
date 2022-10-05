@@ -1,33 +1,55 @@
 import { useState } from 'react';
-import { controlMsg, initState, Msg, State } from '../state-machine';
+import {
+  AppState,
+  control,
+  initState,
+  Msg,
+  runAppM,
+  liftAffAppM,
+  AppM,
+  AppError,
+  liftEffectAppM,
+} from '~/CardanoFe.Main';
+import { pipe } from 'fp-ts/lib/function';
+import { fromAff, toAff } from '~/Control.Promise';
+import { Either } from '~/Data.Either';
 
 type WrappedState = {
-  state: State;
+  state: AppState;
 };
 
+//const promiseToAppM = <A>(p: Promise<A>) => pipe(p, toAff, liftAffAppM);
+
+const appMToPromise = <A>(appM: AppM<A>) => pipe(appM, runAppM, fromAff);
+
 export const useStateMachine = (): [
-  state: State,
-  act: (msg: Msg) => Promise<void>,
+  state: AppState,
+  act: (msg: Msg) => Promise<Either<AppError, void>>,
 ] => {
-  const [state, setState] = useState<WrappedState>({
+  const [state] = useState<WrappedState>({
     state: initState,
   });
 
-  const foreUpdate = useForceUpdate();
+  const forceUpdate = useForceUpdate();
 
-  const act = async (msg: Msg) => {
-    controlMsg(async updateState => {
-      console.log(`Updating State: ${state.state.tag}`, state.state.value);
-      state.state = updateState(state.state);
-      foreUpdate();
-      setState(state);
-    })(async () => state.state)(msg);
-  };
+  const act = (msg: Msg) =>
+    appMToPromise(
+      control({
+        updateState: updateState =>
+          liftEffectAppM(
+            () => {
+              state.state = updateState(state.state);
+              forceUpdate();
+            },
+          ),
+        getState: liftEffectAppM(() => state.state),
+      })(msg),
+    )();
 
   return [state.state, act];
 };
 
 function useForceUpdate() {
-  const [value, setValue] = useState(0); // integer state
-  return () => setValue(value => value + 1); // update the state to force render
+  const [, setValue] = useState(0);
+  return () => setValue(value => value + 1);
 }

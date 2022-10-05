@@ -2,7 +2,6 @@ module CardanoFe.Main where
 
 import Prelude
 
-import CardanoFe.TsBridge (class ToTsBridge, MappingToTsBridge(..))
 import Control.Monad.Error.Class (class MonadThrow, liftEither, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
 import Control.Promise (Promise, toAffE)
@@ -16,18 +15,18 @@ import Data.RemoteReport (RemoteReport(..))
 import Data.RemoteReport as RR
 import Data.Show.Generic (genericShow)
 import Data.String as Str
+import Data.Typelevel.Undefined (undefined)
 import Effect (Effect)
 import Effect.Aff (Aff, Error)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Console (log)
 import Effect.Now as I
-import TsBridge (tsOpaqueType, tsOpaqueType1)
 
-moduleName :: String
-moduleName = "CardanoFe.Main"
+--------------------------------------------------------------------------------
+-- Wallet
+--------------------------------------------------------------------------------
 
-data Wallet
+data WalletId
   = Yoroi
   | Eternl
   | Ccvault
@@ -36,7 +35,7 @@ data Wallet
   | Begin
 
 type WalletApi =
-  { getBalance :: AppM String
+  { getBalance :: AppM (Maybe Lovelace)
   }
 
 type WalletApiImpl =
@@ -44,9 +43,12 @@ type WalletApiImpl =
   }
 
 convertWalletApi :: WalletApiImpl -> WalletApi
-convertWalletApi wai = { getBalance: liftPromise (\_ -> ErrGetBalance) wai.getBalance }
+convertWalletApi wai =
+  { getBalance:
+      parseLovelace <$> liftPromise (\_ -> ErrGetBalance) wai.getBalance
+  }
 
-parseWallet :: String -> Maybe Wallet
+parseWallet :: String -> Maybe WalletId
 parseWallet = case _ of
   "yoroi" -> Just $ Yoroi
   "eternl" -> Just $ Eternl
@@ -56,7 +58,7 @@ parseWallet = case _ of
   "begin" -> Just $ Begin
   _ -> Nothing
 
-printWallet :: Wallet -> String
+printWallet :: WalletId -> String
 printWallet = show >>> Str.toLower
 
 type UnsupportedWallet =
@@ -64,18 +66,47 @@ type UnsupportedWallet =
   }
 
 type SupportedWallet =
-  { wallet :: Wallet
+  { wallet :: WalletId
   }
 
-newtype Balance = Balance Int
+--------------------------------------------------------------------------------
+-- Wallet
+--------------------------------------------------------------------------------
+type Wallet =
+  { type :: WalletId
+  , balance :: Maybe Lovelace
+  , usedAddresses :: Array Address
+  , unUsedAddresses :: Array Address
+  , rewardAddresses :: Array Address
+  , utxos :: Array Utxo
+  }
+
+initWallet :: WalletId -> Wallet
+initWallet w =
+  { type: w
+  , balance: Nothing
+  , usedAddresses: []
+  , unUsedAddresses: []
+  , rewardAddresses: []
+  , utxos: []
+  }
+
+newtype Lovelace = Lovelace Int
+
+parseLovelace :: String -> Maybe Lovelace
+parseLovelace = undefined
 
 newtype Address = Address String
 
 newtype Utxo = Utxo
   { from :: Address
   , to :: Address
-  , amount :: Balance
+  , amount :: Lovelace
   }
+
+--------------------------------------------------------------------------------
+-- AppError
+--------------------------------------------------------------------------------
 
 data AppError
   = ErrWalletNotFound String
@@ -83,37 +114,21 @@ data AppError
   | ErrUnknown
   | ErrLiteral String
   | ErrGetBalance
-  | ErrGetWalletApi Wallet
+  | ErrGetWalletApi WalletId
 
-type WalletState =
-  { type :: Wallet
-  , balance :: Maybe Balance
-  , usedAddresses :: Array Address
-  , unUsedAddresses :: Array Address
-  , rewardAddresses :: Array Address
-  , utxos :: Array Utxo
-  }
-
-data Page
-  = PageDashboard
-  | PageSelectWallet
-
-unPage :: { onPageDashboard :: _, onPageSelectWallet :: _ } -> _
-unPage { onPageDashboard, onPageSelectWallet } = case _ of
-  PageDashboard -> onPageDashboard unit
-  PageSelectWallet -> onPageSelectWallet unit
+--------------------------------------------------------------------------------
+-- State
+--------------------------------------------------------------------------------
 
 data AppState
   = StLogin LoginState
-  | StApp WalletState Page
+  | StApp Wallet Page
 
 type LoginState =
   { supportedWallets :: Array SupportedWallet
   , unsupportedWallets :: Array UnsupportedWallet
-  , selectedWallet :: RemoteReport AppError WalletState
+  , selectedWallet :: RemoteReport AppError Wallet
   }
-
-newtype AppM a = AppM (ExceptT AppError Aff a)
 
 unAppState :: { onLogin :: _, onApp :: _ } -> _
 unAppState { onLogin, onApp } = case _ of
@@ -127,21 +142,42 @@ initState = StLogin
   , selectedWallet: NotAsked
   }
 
-data Msg = MsgGetAvailableWallets | MsgSelectWallet Wallet
+--------------------------------------------------------------------------------
+-- Message
+--------------------------------------------------------------------------------
+
+data Msg = MsgGetAvailableWallets | MsgSelectWallet WalletId | MsgSyncWallet
+
+mkMsg :: { getAvailableWallets :: _, selectWallet :: _, syncWallet :: _ }
+mkMsg =
+  { getAvailableWallets: MsgGetAvailableWallets
+  , selectWallet: MsgSelectWallet
+  , syncWallet: MsgSyncWallet
+  }
+
+--------------------------------------------------------------------------------
+-- Page
+--------------------------------------------------------------------------------
+
+data Page
+  = PageDashboard
+  | PageSelectWallet
+
+unPage :: { onPageDashboard :: _, onPageSelectWallet :: _ } -> _
+unPage { onPageDashboard, onPageSelectWallet } = case _ of
+  PageDashboard -> onPageDashboard unit
+  PageSelectWallet -> onPageSelectWallet unit
+
+--------------------------------------------------------------------------------
+-- App
+--------------------------------------------------------------------------------
+
+newtype AppM a = AppM (ExceptT AppError Aff a)
 
 type AppEnv =
   { updateState :: (AppState -> AppState) -> AppM Unit
   , getState :: AppM AppState
   }
-
-mkMsg :: { getAvailableWallets :: _, selectWallet :: _ }
-mkMsg = { getAvailableWallets: MsgGetAvailableWallets, selectWallet: MsgSelectWallet }
-
-now :: AppM Instant
-now = liftEffect I.now
-
-subscibeRemoteReport :: forall a. ((RemoteReport AppError a -> RemoteReport AppError a) -> AppM Unit) -> AppM a -> AppM Unit
-subscibeRemoteReport = RR.subscibeRemoteReport now
 
 control :: AppEnv -> Msg -> AppM Unit
 control { updateState, getState } msg =
@@ -169,15 +205,25 @@ control { updateState, getState } msg =
                 st -> st
               pure unit
           )
-          (getWalletApi w <#> \_ -> initWalletState w)
+          (getWalletApi w <#> \_ -> initWallet w)
 
         updateState case _ of
-          StLogin _ -> StApp (initWalletState w) PageDashboard
+          StLogin _ -> StApp (initWallet w) PageDashboard
           st -> st
+
+      StApp wallet _, MsgSyncWallet -> do
+        api <- getWalletApi wallet.type
+        balance <- api.getBalance
+
+        updateState case _ of
+          StApp wallet' page' -> StApp wallet' { balance = balance } page'
+          st -> st
+
+        pure unit
 
       _, _ -> pure unit
 
-getWalletApi :: Wallet -> AppM WalletApi
+getWalletApi :: WalletId -> AppM WalletApi
 getWalletApi wallet = wallet
   # printWallet
   # getWalletApiImpl
@@ -209,24 +255,18 @@ isWalletEnabled str = str
   # pure
   # liftPromise (\_ -> ErrWalletNotFound str)
 
-initWalletState :: Wallet -> WalletState
-initWalletState w =
-  { type: w
-  , balance: Nothing
-  , usedAddresses: []
-  , unUsedAddresses: []
-  , rewardAddresses: []
-  , utxos: []
-  }
-
-main :: Effect Unit
-main = do
-  log "Hello"
-
---
+--------------------------------------------------------------------------------
+-- Util
+--------------------------------------------------------------------------------
 
 runAppM :: forall a. AppM a -> Aff (Either AppError a)
 runAppM (AppM ma) = runExceptT ma
+
+subscibeRemoteReport :: forall a. ((RemoteReport AppError a -> RemoteReport AppError a) -> AppM Unit) -> AppM a -> AppM Unit
+subscibeRemoteReport = RR.subscibeRemoteReport now
+
+now :: AppM Instant
+now = liftEffect I.now
 
 -- runAppMEffect :: forall a. AppM a -> Effect Unit
 -- runAppMEffect (AppM ma) = runExceptT ma # launchAff_
@@ -245,36 +285,11 @@ liftAffAppM = liftAff
 liftEffectAppM :: forall a. Effect a -> AppM a
 liftEffectAppM = liftEffect
 
---
+--------------------------------------------------------------------------------
+-- Instances
+--------------------------------------------------------------------------------
 
-instance ToTsBridge Wallet where
-  toTsBridge = tsOpaqueType moduleName "Wallet"
-
-instance ToTsBridge Balance where
-  toTsBridge = tsOpaqueType moduleName "Balance"
-
-instance ToTsBridge Address where
-  toTsBridge = tsOpaqueType moduleName "Address"
-
-instance ToTsBridge Utxo where
-  toTsBridge = tsOpaqueType moduleName "Utxo"
-
-instance ToTsBridge AppState where
-  toTsBridge = tsOpaqueType moduleName "AppState"
-
-instance ToTsBridge Page where
-  toTsBridge = tsOpaqueType moduleName "Page"
-
-instance ToTsBridge Msg where
-  toTsBridge = tsOpaqueType moduleName "Msg"
-
-instance ToTsBridge a => ToTsBridge (AppM a) where
-  toTsBridge = tsOpaqueType1 MP moduleName "AppM" "A"
-
-instance ToTsBridge AppError where
-  toTsBridge = tsOpaqueType moduleName "AppError"
-
-derive instance Generic Wallet _
+derive instance Generic WalletId _
 
 derive newtype instance Functor AppM
 derive newtype instance Apply AppM
@@ -286,8 +301,12 @@ derive newtype instance MonadEffect AppM
 derive newtype instance MonadError AppError AppM
 derive newtype instance MonadThrow AppError AppM
 
-instance Show Wallet where
+instance Show WalletId where
   show = genericShow
+
+--------------------------------------------------------------------------------
+-- Foreign Imports
+--------------------------------------------------------------------------------
 
 foreign import isWalletEnabledImpl :: String -> Promise Boolean
 

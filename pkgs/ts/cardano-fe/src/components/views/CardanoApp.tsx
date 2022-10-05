@@ -1,3 +1,4 @@
+import React from 'react';
 import { pipe } from 'fp-ts/lib/function';
 import {
   AppError,
@@ -6,24 +7,55 @@ import {
   Page,
   printWallet,
   unPage,
-  WalletState,
+  Wallet,
 } from '~/CardanoFe.Main';
 import * as _Maybe from '../../../core/Simple.Data.Maybe/index';
 import { Either } from '~/Data.Either';
+import { css, styled } from 'twin.macro';
+import { CardanoLogo } from '../CardanoLogo';
+import { CenteredLayout } from '../../App';
 
 type CardanoAppProps = {
-  state: [WalletState, Page];
+  state: [Wallet, Page];
   act: (msg: Msg) => Promise<Either<AppError, void>>;
 };
 
 export const CardanoApp = ({ state, act }: CardanoAppProps) => {
   const [wallet, page] = state;
 
-  return pipe(
-    page,
-    unPage({
-      onPageDashboard: () => <pre>{printWallet(wallet.type)}</pre>,
-      onPageSelectWallet: () => null,
-    }),
+  return (
+    <AppLayout>
+      {pipe(
+        page,
+        unPage({
+          onPageDashboard: () => (
+            <div>
+              <WalletDetails>
+                <pre>{printWallet(wallet.type)}</pre>
+              </WalletDetails>
+              <CenteredLayout>
+                <CardanoLogo size={20} />
+              </CenteredLayout>
+            </div>
+          ),
+          onPageSelectWallet: () => null,
+        }),
+      )}
+    </AppLayout>
   );
 };
+
+const WalletDetails = styled.div(() => [
+  css`
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1rem;
+  `,
+]);
+
+const AppLayout = styled.div(() => [
+  css`
+    position: relative;
+  `,
+]);

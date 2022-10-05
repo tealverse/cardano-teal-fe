@@ -1,20 +1,33 @@
-import tw from 'twin.macro';
-import { CardanoWallet } from './components/views/CardanoWallet';
+import tw, { styled } from 'twin.macro';
+import { CardanoApp } from './components/views/CardanoApp';
+import { Login } from './components/views/Login';
+import { unAppState } from '~/CardanoFe.Main';
+import { pipe } from 'fp-ts/lib/function';
+import { useStateMachine } from './hooks/useStateMachine';
 
-const styles = {
-  // Move long class sets out of jsx to keep it scannable
-  container: ({ hasBackground }: { hasBackground: boolean }) => [
-    tw`flex flex-col items-center justify-center h-screen`,
-    hasBackground && tw`bg-gradient-to-b from-electric to-ribbon`,
-  ],
+const App = () => {
+  const [state, act] = useStateMachine();
+
+  return (
+    <div tw="bg-gradient-to-b from-electric to-ribbon h-screen">
+      {pipe(
+        state,
+        unAppState({
+          onLogin: st => (
+            <CenteredLayout>
+              <Login state={st} act={act} />
+            </CenteredLayout>
+          ),
+          onApp: wallet => page =>
+            <CardanoApp state={[wallet, page]} act={act} />,
+        }),
+      )}
+    </div>
+  );
 };
 
-const App = () => (
-  <div css={styles.container({ hasBackground: true })}>
-    <div tw="flex flex-col justify-center h-full gap-y-5">
-      <CardanoWallet />
-    </div>
-  </div>
-);
-
 export default App;
+
+export const CenteredLayout = styled.div(() => [
+  tw`flex flex-col items-center justify-center h-screen`,
+]);

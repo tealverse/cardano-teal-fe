@@ -17,10 +17,7 @@ export const getWalletApiImpl = walletName =>
 export const adaRawToLovelace = cbor => {
   const balance = CSL.Value.from_bytes(hexToBytes(cbor));
   const lovelaces = balance.coin().to_str();
-
-  console.log(lovelaces);
-
-  return 1;
+  return parseInt(lovelaces);
 };
 
 function hexToBytes(hex) {

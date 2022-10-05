@@ -2,7 +2,7 @@ module CardanoFe.TsBridge where
 
 import Prelude
 
-import CardanoFe.Main (Address, AppError, AppM, AppState, Lovelace(..), Msg, Page, Utxo, WalletId)
+import CardanoFe.Main (Address, AppError, AppM, AppState, Lovelace(..), Msg, Page, Utxo, UtxoRaw(..), WalletId)
 import Control.Promise (Promise)
 import Data.DateTime.Instant (Instant)
 import Data.Either (Either)
@@ -74,6 +74,9 @@ instance ToTsBridge Address where
 
 instance ToTsBridge Utxo where
   toTsBridge = tsOpaqueType "CardanoFe.Main" "Utxo"
+
+instance ToTsBridge UtxoRaw where
+  toTsBridge = tsOpaqueType "CardanoFe.Main" "UtxoRaw"
 
 instance ToTsBridge AppState where
   toTsBridge = tsOpaqueType "CardanoFe.Main" "AppState"

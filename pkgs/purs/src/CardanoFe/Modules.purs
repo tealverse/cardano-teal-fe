@@ -21,6 +21,9 @@ myTsProgram =
         , tsValue MP "initState" CardanoFe.Main.initState
         , tsValue MP "initWallet" CardanoFe.Main.initWallet
         , tsValue MP "printWallet" CardanoFe.Main.printWallet
+        , tsValue MP "printAddress" CardanoFe.Main.printAddress
+        , tsValue MP "printUtxoRaw" CardanoFe.Main.printUtxoRaw
+        , tsValue MP "printLovelace" CardanoFe.Main.printLovelace
         , tsValue MP "parseWallet" CardanoFe.Main.parseWallet
         , tsValue MP "getBrowserWallets" CardanoFe.Main.getBrowserWallets
         , tsValue MP "getSupportedWallets" CardanoFe.Main.getSupportedWallets

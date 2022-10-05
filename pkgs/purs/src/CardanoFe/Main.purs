@@ -10,13 +10,12 @@ import Data.Bifunctor (lmap)
 import Data.DateTime.Instant (Instant)
 import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
+import Data.Int (decimal, toStringAs)
 import Data.Maybe (Maybe(..))
 import Data.RemoteReport (RemoteReport(..))
 import Data.RemoteReport as RR
 import Data.Show.Generic (genericShow)
 import Data.String as Str
-import Data.Typelevel.Undefined (undefined)
-import Debug (spy)
 import Effect (Effect)
 import Effect.Aff (Aff, Error)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -37,16 +36,24 @@ data WalletId
 
 type WalletApi =
   { getBalance :: AppM Lovelace
+  , getUnusedAddresses :: AppM (Array Address)
+  , getUtxos :: AppM (Array UtxoRaw)
   }
 
 type WalletApiImpl =
   { getBalance :: Effect (Promise AdaRaw)
+  , getUnusedAddresses :: Effect (Promise (Array String))
+  , getUtxos :: Effect (Promise (Array UtxoRaw))
   }
 
 convertWalletApi :: WalletApiImpl -> WalletApi
 convertWalletApi wai =
   { getBalance:
       adaRawToLovelace <$> liftPromise (\_ -> ErrGetBalance) wai.getBalance
+  , getUnusedAddresses:
+      map Address <$> liftPromise (\_ -> ErrUnusedAddresses) wai.getUnusedAddresses
+  , getUtxos:
+      liftPromise (\_ -> ErrUtxos) wai.getUtxos
   }
 
 parseWallet :: String -> Maybe WalletId
@@ -62,6 +69,15 @@ parseWallet = case _ of
 printWallet :: WalletId -> String
 printWallet = show >>> Str.toLower
 
+printAddress :: Address -> String
+printAddress (Address a) = a
+
+printUtxoRaw :: UtxoRaw -> String
+printUtxoRaw (UtxoRaw a) = a
+
+printLovelace :: Lovelace -> String
+printLovelace (Lovelace a) = toStringAs decimal a
+
 type UnsupportedWallet =
   { walletName :: String
   }
@@ -75,26 +91,24 @@ type SupportedWallet =
 --------------------------------------------------------------------------------
 type Wallet =
   { type :: WalletId
-  , balance :: Maybe Lovelace
-  , usedAddresses :: Array Address
-  , unUsedAddresses :: Array Address
-  , rewardAddresses :: Array Address
-  , utxos :: Array Utxo
+  , balance :: AppRemoteReport Lovelace
+  , unusedAddresses :: AppRemoteReport (Array Address)
+  , utxos :: AppRemoteReport (Array UtxoRaw)
   }
 
 initWallet :: WalletId -> Wallet
 initWallet w =
   { type: w
-  , balance: Nothing
-  , usedAddresses: []
-  , unUsedAddresses: []
-  , rewardAddresses: []
-  , utxos: []
+  , balance: NotAsked
+  , unusedAddresses: NotAsked
+  , utxos: NotAsked
   }
 
 newtype Lovelace = Lovelace Int
 
 newtype AdaRaw = AdaRaw String
+
+newtype UtxoRaw = UtxoRaw String
 
 foreign import adaRawToLovelace :: AdaRaw -> Lovelace
 
@@ -116,6 +130,8 @@ data AppError
   | ErrUnknown
   | ErrLiteral String
   | ErrGetBalance
+  | ErrUtxos
+  | ErrUnusedAddresses
   | ErrGetWalletApi WalletId
 
 --------------------------------------------------------------------------------
@@ -196,7 +212,7 @@ control { updateState, getState } msg =
             , unsupportedWallets = result.unsupportedWallets
             }
           st -> st
- 
+
       StLogin _, MsgSelectWallet w -> do
         _ <- subscibeRemoteReport
           ( \updateRemoteReport -> do
@@ -205,7 +221,6 @@ control { updateState, getState } msg =
                   { selectedWallet = updateRemoteReport s.selectedWallet
                   }
                 st -> st
-              pure unit
           )
           (getWalletApi w <#> \_ -> initWallet w)
 
@@ -214,18 +229,31 @@ control { updateState, getState } msg =
           st -> st
 
       StApp wallet _, MsgSyncWallet -> do
-        let _ = spy "a" 1 
-        
         api <- getWalletApi wallet.type
-        let _ = spy "b" api 
-        
-        balance <- api.getBalance
 
-        let _ = spy "c" 1 
+        _ <- subscibeRemoteReport
+          ( \updateRemoteReport -> do
+              updateState case _ of
+                StApp s p -> StApp s { balance = updateRemoteReport s.balance } p
+                st -> st
+          )
+          (api.getBalance)
 
-        updateState case _ of
-          StApp wallet' page' -> StApp wallet' { balance = Just $ balance } page'
-          st -> st
+        _ <- subscibeRemoteReport
+          ( \updateRemoteReport -> do
+              updateState case _ of
+                StApp s p -> StApp s { unusedAddresses = updateRemoteReport s.unusedAddresses } p
+                st -> st
+          )
+          (api.getUnusedAddresses)
+
+        _ <- subscibeRemoteReport
+          ( \updateRemoteReport -> do
+              updateState case _ of
+                StApp s p -> StApp s { utxos = updateRemoteReport s.utxos } p
+                st -> st
+          )
+          (api.getUtxos)
 
         pure unit
 
@@ -267,6 +295,8 @@ isWalletEnabled str = str
 -- Util
 --------------------------------------------------------------------------------
 
+type AppRemoteReport = RemoteReport AppError
+
 runAppM :: forall a. AppM a -> Aff (Either AppError a)
 runAppM (AppM ma) = runExceptT ma
 
@@ -297,8 +327,6 @@ liftEffectAppM = liftEffect
 -- Instances
 --------------------------------------------------------------------------------
 
-derive instance Generic WalletId _
-
 derive newtype instance Functor AppM
 derive newtype instance Apply AppM
 derive newtype instance Applicative AppM
@@ -309,7 +337,12 @@ derive newtype instance MonadEffect AppM
 derive newtype instance MonadError AppError AppM
 derive newtype instance MonadThrow AppError AppM
 
+derive instance Generic WalletId _
 instance Show WalletId where
+  show = genericShow
+
+derive instance Generic Address _
+instance Show Address where
   show = genericShow
 
 --------------------------------------------------------------------------------

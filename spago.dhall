@@ -22,6 +22,7 @@ to generate this file without the comments in this block.
   , "effect"
   , "either"
   , "heterogeneous"
+  , "integers"
   , "maybe"
   , "now"
   , "prelude"

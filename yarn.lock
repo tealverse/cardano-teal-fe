@@ -383,6 +383,11 @@
   resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-0.3.0.tgz#ea89004119dc42db2e1dba0f97d553f7372f6fcb"
   integrity sha512-AHPmaAx+RYfZz0eYu6Gviiagpmiyw98ySSlQvCUhVGDRtDFe4DBS0x1bSjdF3gqUDYOczB+yYvBTtEylYSdRhg==
 
+"@emurgo/cardano-serialization-lib-asmjs@^11.1.0":
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/@emurgo/cardano-serialization-lib-asmjs/-/cardano-serialization-lib-asmjs-11.1.0.tgz#cf55bd9de7759f117bfaa85442eff1c8c910ca05"
+  integrity sha512-wxF/Yle0HBCs19bDue+zpG8pRTP0iZk90TTNX3VfsAUmIRbP2GqheEN6Uwsd0kfCdwkRbOZCSEb7+QLJ6MOCPg==
+
 "@esbuild/linux-loong64@0.15.7":
   version "0.15.7"
   resolved "https://registry.yarnpkg.com/@esbuild/linux-loong64/-/linux-loong64-0.15.7.tgz#1ec4af4a16c554cbd402cc557ccdd874e3f7be53"

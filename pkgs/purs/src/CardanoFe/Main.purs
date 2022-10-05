@@ -2,13 +2,14 @@ module CardanoFe.Main where
 
 import Prelude
 
-import Control.Monad.Error.Class (class MonadThrow, liftEither, try)
+import Control.Monad.Error.Class (class MonadThrow, liftEither, throwError, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
+import Control.Parallel.Class (class Parallel, parallel, sequential)
 import Control.Promise (Promise, toAffE)
 import Data.Array (foldM)
 import Data.Bifunctor (lmap)
 import Data.DateTime.Instant (Instant)
-import Data.Either (Either)
+import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Int (decimal, toStringAs)
 import Data.Maybe (Maybe(..))
@@ -16,8 +17,9 @@ import Data.RemoteReport (RemoteReport(..))
 import Data.RemoteReport as RR
 import Data.Show.Generic (genericShow)
 import Data.String as Str
+import Data.Typelevel.Undefined (undefined)
 import Effect (Effect)
-import Effect.Aff (Aff, Error)
+import Effect.Aff (Aff, Error, ParAff, error)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Now as I
@@ -214,15 +216,14 @@ control { updateState, getState } msg =
           st -> st
 
       StLogin _, MsgSelectWallet w -> do
-        _ <- subscibeRemoteReport
-          ( \updateRemoteReport -> do
-              updateState case _ of
-                StLogin s -> StLogin s
-                  { selectedWallet = updateRemoteReport s.selectedWallet
-                  }
-                st -> st
-          )
-          (getWalletApi w <#> \_ -> initWallet w)
+        _ <- getWalletApi w
+          <#> (\_ -> initWallet w)
+          # subscibeRemoteReport
+              ( \updateRemoteReport -> do
+                  updateState case _ of
+                    StLogin s -> StLogin s { selectedWallet = updateRemoteReport s.selectedWallet }
+                    st -> st
+              )
 
         updateState case _ of
           StLogin _ -> StApp (initWallet w) PageDashboard
@@ -231,29 +232,34 @@ control { updateState, getState } msg =
       StApp wallet _, MsgSyncWallet -> do
         api <- getWalletApi wallet.type
 
-        _ <- subscibeRemoteReport
-          ( \updateRemoteReport -> do
-              updateState case _ of
-                StApp s p -> StApp s { balance = updateRemoteReport s.balance } p
-                st -> st
-          )
-          (api.getBalance)
+        _ <- sequential ado
+          _ <- api.getBalance
+            # subscibeRemoteReport
+                ( \updateRemoteReport -> do
+                    updateState case _ of
+                      StApp s p -> StApp s { balance = updateRemoteReport s.balance } p
+                      st -> st
+                )
+            # parallel
 
-        _ <- subscibeRemoteReport
-          ( \updateRemoteReport -> do
-              updateState case _ of
-                StApp s p -> StApp s { unusedAddresses = updateRemoteReport s.unusedAddresses } p
-                st -> st
-          )
-          (api.getUnusedAddresses)
+          _ <- api.getUnusedAddresses
+            # subscibeRemoteReport
+                ( \updateRemoteReport -> do
+                    updateState case _ of
+                      StApp s p -> StApp s { unusedAddresses = updateRemoteReport s.unusedAddresses } p
+                      st -> st
+                )
+            # parallel
 
-        _ <- subscibeRemoteReport
-          ( \updateRemoteReport -> do
-              updateState case _ of
-                StApp s p -> StApp s { utxos = updateRemoteReport s.utxos } p
-                st -> st
-          )
-          (api.getUtxos)
+          _ <- api.getUtxos
+            # subscibeRemoteReport
+                ( \updateRemoteReport -> do
+                    updateState case _ of
+                      StApp s p -> StApp s { utxos = updateRemoteReport s.utxos } p
+                      st -> st
+                )
+            # parallel
+          in unit
 
         pure unit
 
@@ -337,12 +343,34 @@ derive newtype instance MonadEffect AppM
 derive newtype instance MonadError AppError AppM
 derive newtype instance MonadThrow AppError AppM
 
+newtype ParAppM a = ParAppM (ParAff a)
+
+derive newtype instance Functor ParAppM
+derive newtype instance Apply ParAppM
+derive newtype instance Applicative ParAppM
+
+instance Parallel ParAppM AppM where
+  parallel ma = runAppM ma
+    >>=
+      ( case _ of
+          Left err -> throwError $ error $ show err
+          Right ok -> pure $ ok
+      )
+    # parallel
+    # ParAppM
+  sequential (ParAppM ma) = liftAff $ sequential ma
+
 derive instance Generic WalletId _
+derive instance Generic Address _
+derive instance Generic AppError _
+
 instance Show WalletId where
   show = genericShow
 
-derive instance Generic Address _
 instance Show Address where
+  show = genericShow
+
+instance Show AppError where
   show = genericShow
 
 --------------------------------------------------------------------------------

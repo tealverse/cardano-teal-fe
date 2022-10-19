@@ -1,4 +1,6 @@
 import Affjax
+import Affjax.Node
+import Affjax.Web
 import CardanoFe.AppDebug
 import CardanoFe.Muesli
 import Data.Bifunctor

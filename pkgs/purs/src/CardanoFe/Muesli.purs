@@ -1,24 +1,25 @@
 module CardanoFe.Muesli
   ( Currency(..)
   , MuesliId(..)
-  , foo
+  , getTicker
   , getMuesliTicker
   ) where
 
 import Prelude
 
-import Affjax (Error)
-import Affjax.ResponseFormat (ResponseFormat(..))
+import Affjax (AffjaxDriver, Error, get)
+import Affjax.ResponseFormat (ResponseFormat(..), json)
 import Affjax.ResponseHeader (ResponseHeader)
 import Affjax.StatusCode (StatusCode)
-import Affjax.Web (get)
+import CardanoFe.AppDebug (appDebug)
 import Data.Argonaut (Json)
 import Data.Either (Either)
 import Data.Map (Map)
 import Data.Maybe (Maybe)
+import Data.Number (log)
 import Data.Pair (Pair)
 import Data.Typelevel.Undefined (undefined)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, runAff_)
 import Foreign (Foreign)
 import Foreign.Object (Object)
 
@@ -43,11 +44,15 @@ type MuesliTicker' = Object
   , price_change :: Number
   }
 
-getMuesliTicker :: Aff (Either Error MuesliTicker)
-getMuesliTicker = undefined -- get Json "http://analyticsv2.muesliswap.com/ticker"
+getMuesliTicker :: AffjaxDriver -> Aff (Either Error MuesliTicker)
+getMuesliTicker driver = undefined -- runAff_ (\res -> log $ appDebug res) (getTicker driver)
 
-foo
-  :: Aff
+foo :: Maybe Json -> Maybe MuesliTicker
+foo = undefined
+
+getTicker
+  :: AffjaxDriver
+  -> Aff
        ( Either Error
            { body :: Json
            , headers :: Array ResponseHeader
@@ -55,6 +60,4 @@ foo
            , statusText :: String
            }
        )
-foo = get (Json identity) "http://analyticsv2.muesliswap.com/ticker"
-
--- runAff_ (\res -> log $ show $ lmap message $ map (lmap printError) $ res) foo
+getTicker driver = get driver json "http://analyticsv2.muesliswap.com/ticker"

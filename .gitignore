@@ -11,3 +11,4 @@ pkgs/ts/cardano-fe/core/*
 .spago
 .psc-ide-port
 .psa-stash
+.psci_modules

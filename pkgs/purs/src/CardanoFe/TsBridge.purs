@@ -2,7 +2,7 @@ module CardanoFe.TsBridge where
 
 import Prelude
 
-import CardanoFe.Main (Address, AppError, AppM, AppState, Lovelace(..), Msg, Page, Utxo, UtxoRaw(..), WalletId)
+import CardanoFe.Main (Address, AppError, AppM, AppState, Lovelace, Msg, Page, Utxo, UtxoRaw, WalletId)
 import Control.Promise (Promise)
 import Data.DateTime.Instant (Instant)
 import Data.Either (Either)

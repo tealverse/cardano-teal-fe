@@ -7,7 +7,7 @@
   },
   "main": "pkgs/ts/cardano-fe/src",
   "scripts": {
-    "dev": "NODE_ENV=development vite",
+    "start": "NODE_ENV=development vite",
     "build": "tsc && vite build",
     "serve": "vite preview"
   },

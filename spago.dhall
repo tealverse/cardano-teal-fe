@@ -14,7 +14,9 @@ to generate this file without the comments in this block.
 , dependencies =
   [ "aff"
   , "aff-promise"
+  , "affjax"
   , "affjax-web"
+  , "argonaut"
   , "arrays"
   , "bifunctors"
   , "console"
@@ -39,5 +41,5 @@ to generate this file without the comments in this block.
   , "typescript-bridge"
   ]
 , packages = ./packages.dhall
-, sources = [ "pkgs/purs/src/**/*.purs", "pkgs/purs/test/**/*.purs" ]
+, sources = [ "pkgs/purs/src/**/*.purs", "pkgs/purs/test/**/*.purs"]
 }

@@ -44,9 +44,15 @@ newtype MuesliTicker = MuesliTicker
   )
 
 instance AppDecodeJson MuesliTicker where
-  appDecodeJson = undefined
+  appDecodeJson json = f1 json >>= f2
 
 --
+
+f1 :: Json -> Either JsonDecodeError MuesliTicker'
+f1 = appDecodeJson
+
+f2 :: MuesliTicker' -> Either JsonDecodeError MuesliTicker
+f2 = undefined
 
 type MuesliTicker' = Object
   { last_price :: Foreign

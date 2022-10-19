@@ -15,11 +15,11 @@ import CardanoFe.AppDebug (class AppDebug, appDebug)
 import CardanoFe.AppDecodeJson (class AppDecodeJson, appDecodeJson)
 import Control.Alt ((<|>))
 import Data.Argonaut (Json, JsonDecodeError(..))
+import Data.Array (catMaybes)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Pair (Pair(..))
 import Data.String (Pattern(..), split)
-import Data.Traversable (traverse)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
@@ -46,19 +46,19 @@ type TradingPair = Pair Currency
 --
 
 parseMuesliTicker :: MuesliTickerImpl -> Either JsonDecodeError MuesliTicker
-parseMuesliTicker obj = obj
-  # Obj.toUnfoldable
-  # traverse parseMuesliValue
-  <#> MuesliTicker
+parseMuesliTicker obj =
+  Right $ obj
+    # Obj.toUnfoldable
+    <#> parsMuesliMaybe
+    # catMaybes
+    # MuesliTicker
 
--- parseMuesliMaybe :: Tuple String MuesliValueImpl -> Maybe MuesliValue
--- parseMuesliMaybe t =
---   let
---     x = parseMuesliValue t
---   in
---     case x of
---       Left _ -> Nothing
---       Right mv -> Just mv
+parsMuesliMaybe :: Tuple String MuesliValueImpl -> Maybe MuesliValue
+parsMuesliMaybe t = t
+  # parseMuesliValue
+  # case _ of
+      Left _ -> Nothing
+      Right mv -> Just mv
 
 parseMuesliValue :: Tuple String MuesliValueImpl -> Either JsonDecodeError MuesliValue
 parseMuesliValue (key /\ impl) = do

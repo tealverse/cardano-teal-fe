@@ -7,7 +7,6 @@ dist-ssr
 # purescript
 
 pkgs/ts/cardano-fe/core/*
-.purs-repl
 .spago
 .psc-ide-port
 .psa-stash

@@ -2,17 +2,17 @@ module CardanoFe.AppDecodeJson where
 
 import Prelude
 
+import Data.Argonaut (decodeJson)
 import Data.Argonaut.Core (Json, toObject)
-import Data.Argonaut.Decode.Decoders (decodeArray, decodeBoolean, decodeInt, decodeMap, decodeMaybe, decodeNumber, decodeString)
+import Data.Argonaut.Decode.Decoders (decodeArray, decodeBoolean, decodeForeignObject, decodeInt, decodeMap, decodeMaybe, decodeNumber, decodeString)
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.Either (Either)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (class IsSymbol, reflectSymbol)
+import Foreign.Object (Object)
 import Foreign.Object as FO
-import Prelude (bind, ($), (<$>))
 import Prim.Row as Row
 import Prim.RowList as RL
 import Record as Record
@@ -33,6 +33,12 @@ instance AppDecodeJson String where
 instance AppDecodeJson Boolean where
   appDecodeJson = decodeBoolean
 
+instance AppDecodeJson Json where
+  appDecodeJson = decodeJson
+
+instance AppDecodeJson a => AppDecodeJson (Object a) where
+  appDecodeJson = decodeForeignObject appDecodeJson
+
 instance (Ord k, AppDecodeJson k, AppDecodeJson v) => AppDecodeJson (Map k v) where
   appDecodeJson = decodeMap appDecodeJson appDecodeJson
 
@@ -44,7 +50,7 @@ instance (AppDecodeJson a) => AppDecodeJson (Array a) where
 
 --
 
-instance 
+instance
   ( GDecodeJson row list
   , RL.RowToList row list
   ) =>

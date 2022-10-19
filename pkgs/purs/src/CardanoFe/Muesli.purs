@@ -80,7 +80,9 @@ parseId str = str
       [ id, tp ] -> tp
         # split (Pattern "_")
         # case _ of
-            [ a, b ] -> Right $ (MuesliId id) /\ Pair (Currency a) (Currency b)
+            [ a, b ] ->
+              if a /= "" && b /= "" then Right $ (MuesliId id) /\ Pair (Currency a) (Currency b)
+              else Left $ TypeMismatch "invalid currency"
             _ -> Left $ TypeMismatch "could not identify trading pairs"
       _ -> Left $ TypeMismatch "wrong dot count"
 

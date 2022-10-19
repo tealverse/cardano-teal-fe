@@ -2,11 +2,16 @@ module CardanoFe.AppDebug where
 
 import Prelude
 
+import Affjax as Affjax
+import Affjax.ResponseHeader as Affjax.ResponseHeader
+import Affjax.StatusCode as Affjax.StatusCode
+import Data.Argonaut as Argonaut
+import Data.Either (Either(..))
 import Data.String (joinWith)
 import Data.Symbol (class IsSymbol, reflectSymbol)
+import Effect.Exception (Error)
 import Heterogeneous.Folding (class FoldingWithIndex, class HFoldlWithIndex, hfoldlWithIndex)
-import Heterogeneous.Mapping (hmap)
-import Type.Proxy (Proxy(..))
+import Type.Proxy (Proxy)
 
 class AppDebug a where
   appDebug :: a -> String
@@ -30,6 +35,28 @@ instance AppDebug Boolean where
 
 instance AppDebug Unit where
   appDebug = show
+
+instance AppDebug Error where
+  appDebug = show
+
+instance AppDebug Affjax.Error where
+  appDebug = Affjax.printError
+
+instance AppDebug Affjax.ResponseHeader.ResponseHeader where
+  appDebug = show
+
+instance AppDebug Affjax.StatusCode.StatusCode where
+  appDebug = show
+
+instance AppDebug Argonaut.Json where
+  appDebug = Argonaut.stringify
+
+--
+
+instance (AppDebug a, AppDebug b) => AppDebug (Either a b) where
+  appDebug = case _ of
+    Left a -> "(Left " <> appDebug a <> ")"
+    Right b -> "(Right " <> appDebug b <> ")"
 
 --
 
@@ -56,3 +83,4 @@ instance
       | otherwise = str <> ", "
 
 --
+

@@ -17,7 +17,6 @@ import Data.RemoteReport (RemoteReport(..))
 import Data.RemoteReport as RR
 import Data.Show.Generic (genericShow)
 import Data.String as Str
-import Data.Typelevel.Undefined (undefined)
 import Effect (Effect)
 import Effect.Aff (Aff, Error, ParAff, error)
 import Effect.Aff.Class (class MonadAff, liftAff)

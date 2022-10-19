@@ -10,35 +10,21 @@ import Prelude
 
 import Affjax (AffjaxDriver, Response, get)
 import Affjax as Affjax
-import Affjax.ResponseFormat (ResponseFormat(..), json)
-import Affjax.ResponseHeader (ResponseHeader)
-import Affjax.StatusCode (StatusCode)
-import CardanoFe.AppDebug (appDebug)
+import Affjax.ResponseFormat (json)
+import CardanoFe.AppDebug (class AppDebug, appDebug)
 import CardanoFe.AppDecodeJson (class AppDecodeJson, appDecodeJson)
 import Control.Alt ((<|>))
-import Data.Argonaut (Json, JsonDecodeError(..), decodeJson)
+import Data.Argonaut (Json, JsonDecodeError(..))
 import Data.Either (Either(..))
-import Data.Map (Map)
-import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Number (log)
-import Data.Pair (Pair)
+import Data.Pair (Pair(..))
+import Data.String (Pattern(..), split)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import Data.Typelevel.Undefined (undefined)
-import Effect.Aff (Aff, runAff_)
-import Foreign (Foreign)
-import Foreign.Object (Object, toUnfoldable)
+import Effect.Aff (Aff)
+import Foreign.Object (Object)
 import Foreign.Object as Obj
-
-newtype Currency = Currency String
-
-newtype MuesliId = MuesliId String
-
-derive newtype instance Ord MuesliId
-
-type TradingPair = Pair Currency
 
 newtype MuesliTicker = MuesliTicker (Array MuesliValue)
 
@@ -46,13 +32,16 @@ type MuesliValue =
   { id :: MuesliId
   , tradingPair :: TradingPair
   , lastPrice :: Maybe Number
-  , baseVolume :: Int
+  , baseVolume :: Number
   , quoteVolume :: Number
   , priceChange :: Number
   }
 
-instance AppDecodeJson MuesliTicker where
-  appDecodeJson json = appDecodeJson json >>= parseMuesliTicker
+newtype Currency = Currency String
+
+newtype MuesliId = MuesliId String
+
+type TradingPair = Pair Currency
 
 --
 
@@ -62,8 +51,38 @@ parseMuesliTicker obj = obj
   # traverse parseMuesliValue
   <#> MuesliTicker
 
+-- parseMuesliMaybe :: Tuple String MuesliValueImpl -> Maybe MuesliValue
+-- parseMuesliMaybe t =
+--   let
+--     x = parseMuesliValue t
+--   in
+--     case x of
+--       Left _ -> Nothing
+--       Right mv -> Just mv
+
+parseMuesliValue :: Tuple String MuesliValueImpl -> Either JsonDecodeError MuesliValue
+parseMuesliValue (key /\ impl) = do
+  id /\ tradingPair <- parseId key
+  lastPrice <- parseLastPrice impl.last_price
+  pure
+    { id
+    , tradingPair
+    , lastPrice
+    , baseVolume: impl.base_volume
+    , quoteVolume: impl.quote_volume
+    , priceChange: impl.price_change
+    }
+
 parseId :: String -> Either JsonDecodeError (Tuple MuesliId TradingPair)
-parseId = undefined
+parseId str = str
+  # split (Pattern ".")
+  # case _ of
+      [ id, tp ] -> tp
+        # split (Pattern "_")
+        # case _ of
+            [ a, b ] -> Right $ (MuesliId id) /\ Pair (Currency a) (Currency b)
+            _ -> Left $ TypeMismatch "could not identify trading pairs"
+      _ -> Left $ TypeMismatch "wrong dot count"
 
 parseLastPrice :: Json -> Either JsonDecodeError (Maybe Number)
 parseLastPrice json = do
@@ -73,20 +92,6 @@ parseLastPrice json = do
     Left n -> Right $ Just n
     Right "NA" -> Right $ Nothing
     _ -> Left $ TypeMismatch "not a valid number"
-
-parseMuesliValue :: Tuple String MuesliValueImpl -> Either JsonDecodeError MuesliValue
-parseMuesliValue (key /\ impl) = do
-  id /\ tradingPair <- parseId key
-  lastPrice <- parseLastPrice impl.last_price
-
-  pure
-    { id
-    , tradingPair
-    , lastPrice
-    , baseVolume: impl.base_volume
-    , quoteVolume: impl.quote_volume
-    , priceChange: impl.price_change
-    }
 
 data ApiError
   = ErrAffjax Affjax.Error
@@ -116,7 +121,25 @@ type MuesliTickerImpl = Object MuesliValueImpl
 
 type MuesliValueImpl =
   { last_price :: Json
-  , base_volume :: Int
+  , base_volume :: Number
   , quote_volume :: Number
   , price_change :: Number
   }
+
+--
+
+instance AppDebug ApiError where
+  appDebug = case _ of
+    ErrAffjax e -> appDebug e
+    ErrDecode e -> appDebug e
+
+derive newtype instance AppDebug Currency
+derive newtype instance Ord MuesliId
+
+derive newtype instance Eq MuesliId
+
+derive newtype instance AppDebug MuesliId
+instance AppDecodeJson MuesliTicker where
+  appDecodeJson json = appDecodeJson json >>= parseMuesliTicker
+
+derive newtype instance AppDebug MuesliTicker

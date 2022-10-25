@@ -42,7 +42,7 @@ export const WalletSelector = ({
 }: WalletSelectorProps) => {
   return (
     <SelectorRow>
-      <h2>{printWallet(wallet)}</h2>
+      <Label>{printWallet(wallet)}</Label>
       <div>
         <Button variant="primary" onClick={() => selectWallet(wallet)}>
           Enable
@@ -57,5 +57,11 @@ const SelectorRow = styled.div(() => [
     display: flex;
     width: 15rem;
     justify-content: space-between;
+  `,
+]);
+
+const Label = styled.h2(() => [
+  css`
+    font-size: 1.75rem;
   `,
 ]);

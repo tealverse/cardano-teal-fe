@@ -24,6 +24,8 @@ import { unMaybe } from '../../../core/Simple.Data.Maybe/index';
 import { SortableTable } from '../SortableTable';
 import { pairToTsTuple } from '../../pursTsInterop';
 import { useInterval } from '../../hooks/useInterval';
+import { Margin } from '../helper';
+import { CenterTitle } from '../text';
 
 type CardanoAppProps = {
   state: [Wallet, Page];
@@ -44,7 +46,7 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
   });
 
   return (
-    <AppLayout>
+    <PageLayout>
       {pipe(
         page,
         unPage({
@@ -94,8 +96,9 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
                   )}
                 </pre>
               </WalletDetails>
-              <CenteredLayout>
+              <CenteredLayout gap={5}>
                 <CardanoLogo size={20} />
+                <CenterTitle>Dashboard</CenterTitle>
                 <MuesliTickerTable
                   muesliTicker={pipe(
                     page.muesliTicker,
@@ -120,7 +123,7 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
           onPageSelectWallet: () => null,
         }),
       )}
-    </AppLayout>
+    </PageLayout>
   );
 };
 
@@ -134,9 +137,11 @@ const WalletDetails = styled.div(() => [
   `,
 ]);
 
-const AppLayout = styled.div(() => [
+const PageLayout = styled.div(() => [
   css`
     position: relative;
+    min-height: 100vh;
+    padding: 5rem;
   `,
 ]);
 
@@ -164,9 +169,9 @@ const MuesliTickerTable = ({
   return (
     <SortableTable
       columns={[
-        { label: 'From', selector: 'tradingFrom', sortable: false },
-        { label: 'To', selector: 'tradingTo', sortable: false },
-        { label: 'Price', selector: 'lastPrice', sortable: false },
+        { label: 'Pair', selector: 'tradingTo', sortable: false },
+        { label: 'Token', selector: 'tradingFrom', sortable: false },
+        { label: 'Last Price', selector: 'lastPrice', sortable: false },
         { label: 'Price Change', selector: 'priceChange', sortable: false },
         { label: 'Volume', selector: 'baseVolume', sortable: false },
       ]}

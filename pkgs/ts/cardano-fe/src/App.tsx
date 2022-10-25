@@ -1,4 +1,4 @@
-import tw, { styled } from 'twin.macro';
+import tw, { css, styled } from 'twin.macro';
 import { CardanoApp } from './components/views/CardanoApp';
 import { Login } from './components/views/Login';
 import { unAppState } from '~/CardanoFe.Main';
@@ -14,12 +14,12 @@ const App = () => {
   }, [state]);
 
   return (
-    <div tw="bg-gradient-to-b from-electric to-ribbon min-h-screen">
+    <AppLayout>
       {pipe(
         state,
         unAppState({
           onLogin: st => (
-            <CenteredLayout>
+            <CenteredLayout gap={5}>
               <Login state={st} act={act} />
             </CenteredLayout>
           ),
@@ -29,12 +29,27 @@ const App = () => {
           },
         }),
       )}
-    </div>
+    </AppLayout>
   );
 };
 
 export default App;
 
-export const CenteredLayout = styled.div(() => [
-  tw`flex flex-col items-center justify-center min-h-screen`,
+type CenteredLayoutProps = {
+  gap?: number;
+};
+
+export const CenteredLayout = styled.div<CenteredLayoutProps>(({ gap = 0 }) => [
+  tw`flex flex-col items-center justify-center`,
+  css`
+    gap: ${gap}rem;
+    min-height: 100vh;
+  `,
+]);
+
+const AppLayout = styled.div(() => [
+  tw`bg-gradient-to-b from-electric to-ribbon min-h-screen bg-fixed`,
+  css`
+    position: relative;
+  `,
 ]);

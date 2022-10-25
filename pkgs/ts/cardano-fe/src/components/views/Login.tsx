@@ -15,6 +15,7 @@ import { css, styled } from 'twin.macro';
 import * as _Maybe from '../../../core/Simple.Data.Maybe/index';
 import { unRemoteReport } from '~/Data.RemoteReport';
 import { WalletSwitcher } from '../WalletSwitcher';
+import { CenteredLayout } from '../../App';
 
 type LoginProps = {
   state: LoginState;
@@ -29,7 +30,7 @@ export const Login = (props: LoginProps): ReactElement => {
   }, []);
 
   return (
-    <div>
+    <CenteredLayout gap={1}>
       <CenterTitle>Landing</CenterTitle>
       <WalletSwitcher
         supportedWallets={state.supportedWallets}
@@ -37,12 +38,12 @@ export const Login = (props: LoginProps): ReactElement => {
       />
       <>
         {unRemoteReport({
-          onNotAsked: () => 'notAsked',
+          onNotAsked: () => null,
           onLoading: () => 'loading',
           onFailure: () => 'failure',
           onSuccess: () => 'success',
         })(state.selectedWallet)}
       </>
-    </div>
+    </CenteredLayout>
   );
 };

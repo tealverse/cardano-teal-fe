@@ -2,10 +2,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        electric: '#db00ff',
-        ribbon: '#0047ff',
+        electric: '#FA3E19',
+        ribbon: '#0033ad',
       },
     },
   },
   plugins: [],
-}
+};

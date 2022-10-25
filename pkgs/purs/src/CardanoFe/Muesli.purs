@@ -1,28 +1,32 @@
 module CardanoFe.Muesli
   ( ApiError
-  , Currency
-  , MuesliId
-  , MuesliTicker
+  , Currency(..)
+  , MuesliId(..)
+  , MuesliTicker(..)
+  , MuesliValue
+  , TradingPair
   , getMuesliTicker
   ) where
 
 import Prelude
 
-import Affjax (AffjaxDriver, Response, get)
+import Affjax (AffjaxDriver, Response, get, printError)
 import Affjax as Affjax
 import Affjax.ResponseFormat (json)
 import CardanoFe.AppDebug (class AppDebug, appDebug)
 import CardanoFe.AppDecodeJson (class AppDecodeJson, appDecodeJson)
 import Control.Alt ((<|>))
-import Data.Argonaut (Json, JsonDecodeError(..))
+import Data.Argonaut (Json, JsonDecodeError(..), printJsonDecodeError)
 import Data.Array (catMaybes)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Data.Pair (Pair(..))
 import Data.String (Pattern(..), split)
+import Data.Traversable (traverse)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, catchError)
 import Foreign.Object (Object)
 import Foreign.Object as Obj
 
@@ -46,19 +50,15 @@ type TradingPair = Pair Currency
 --
 
 parseMuesliTicker :: MuesliTickerImpl -> Either JsonDecodeError MuesliTicker
-parseMuesliTicker obj =
-  Right $ obj
-    # Obj.toUnfoldable
-    <#> parsMuesliMaybe
-    # catMaybes
-    # MuesliTicker
+parseMuesliTicker obj = obj
+  # Obj.toUnfoldable
+  # traverseForgiving parseMuesliValue
+  <#> MuesliTicker
 
-parsMuesliMaybe :: Tuple String MuesliValueImpl -> Maybe MuesliValue
-parsMuesliMaybe t = t
-  # parseMuesliValue
-  # case _ of
-      Left _ -> Nothing
-      Right mv -> Just mv
+traverseForgiving :: forall e a b. (a -> Either e b) -> Array a -> Either e (Array b)
+traverseForgiving f xs = xs
+  # traverse (\x -> (f x <#> Just) `catchError` (\_ -> Right $ Nothing))
+  <#> catMaybes
 
 parseMuesliValue :: Tuple String MuesliValueImpl -> Either JsonDecodeError MuesliValue
 parseMuesliValue (key /\ impl) = do
@@ -99,6 +99,10 @@ data ApiError
   = ErrAffjax Affjax.Error
   | ErrDecode JsonDecodeError
 
+instance Show ApiError where
+  show (ErrAffjax e) = printError e
+  show (ErrDecode e) = show e
+
 getMuesliTicker :: AffjaxDriver -> Aff (Either ApiError MuesliTicker)
 getMuesliTicker driver = do
   get driver json "http://analyticsv2.muesliswap.com/ticker"
@@ -137,6 +141,10 @@ instance AppDebug ApiError where
 
 derive newtype instance AppDebug Currency
 derive newtype instance Ord MuesliId
+
+derive instance Newtype MuesliTicker _
+derive instance Newtype Currency _
+derive instance Newtype MuesliId _
 
 derive newtype instance Eq MuesliId
 

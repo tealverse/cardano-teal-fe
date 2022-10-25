@@ -19,6 +19,7 @@ import { CardanoLogo } from '../CardanoLogo';
 import { CenteredLayout } from '../../App';
 import { unRemoteReport } from '~/Data.RemoteReport';
 import { printUtxoRaw } from '../../../core/CardanoFe.Main/index';
+import { MuesliTicker } from '~/CardanoFe.Muesli';
 
 type CardanoAppProps = {
   state: [Wallet, Page];
@@ -96,6 +97,7 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
               </WalletDetails>
               <CenteredLayout>
                 <CardanoLogo size={20} />
+                
               </CenteredLayout>
             </div>
           ),
@@ -121,3 +123,8 @@ const AppLayout = styled.div(() => [
     position: relative;
   `,
 ]);
+
+const MuesliTicker = ({muesliTicker} : {muesliTicker : MuesliTicker}) => {
+
+  return <div>muesli!!</div>
+}

@@ -3,7 +3,7 @@ module CardanoFe.Main where
 import Prelude
 
 import Affjax.Node as AN
-import CardanoFe.Muesli (MuesliTicker, getMuesliTicker)
+import CardanoFe.Muesli (ApiError, MuesliTicker, getMuesliTicker)
 import Control.Monad.Error.Class (class MonadThrow, liftEither, throwError, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
 import Control.Parallel.Class (class Parallel, parallel, sequential)
@@ -137,6 +137,7 @@ data AppError
   | ErrUtxos
   | ErrUnusedAddresses
   | ErrGetWalletApi WalletId
+  | ErrApi ApiError 
 
 --------------------------------------------------------------------------------
 -- State
@@ -275,7 +276,7 @@ control { updateState, getState } msg =
 
       StApp _ _, MsgGetMuesliTicker -> do
         _ <- getMuesliTicker AN.driver
-          # liftAffEitherAppM
+          # liftAffEitherAppM ErrApi
           # subscibeRemoteReport
               ( \updateRemoteReport -> do
                   updateState case _ of
@@ -348,8 +349,12 @@ liftPromise mapErr f = f
 liftAffAppM :: forall a. Aff a -> AppM a
 liftAffAppM = liftAff
 
-liftAffEitherAppM :: forall a e. Aff (Either e a) -> AppM a
-liftAffEitherAppM = undefined
+liftAffEitherAppM :: forall a e. (e -> AppError) -> Aff (Either e a) -> AppM a
+liftAffEitherAppM mkError = liftAff >>> \appM -> do 
+  eitherEA <- appM
+  case eitherEA of
+    Left err -> throwError $ mkError err
+    Right ok -> pure ok 
 
 liftEffectAppM :: forall a. Effect a -> AppM a
 liftEffectAppM = liftEffect

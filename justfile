@@ -1,5 +1,8 @@
 PURS_OUTPUT := "pkgs/ts/cardano-fe/core"
 
+dev:
+  NODE_ENV=development yarn run vite
+
 spago-build:
   yarn run spago build --purs-args "--stash --censor-lib --censor-codes=WildcardInferredType --output {{PURS_OUTPUT}}"
 

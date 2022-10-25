@@ -23,6 +23,7 @@ import { MuesliTicker } from '~/CardanoFe.Muesli';
 import { unMaybe } from '../../../core/Simple.Data.Maybe/index';
 import { SortableTable } from '../SortableTable';
 import { pairToTsTuple } from '../../pursTsInterop';
+import { useInterval } from '../../hooks/useInterval';
 
 type CardanoAppProps = {
   state: [Wallet, Page];
@@ -32,29 +33,15 @@ type CardanoAppProps = {
 export const CardanoApp = ({ state, act }: CardanoAppProps) => {
   const [wallet, page] = state;
 
-  useEffect(() => {
-    console.log('init data sync');
+  useInterval(10000, () => {
+    console.log('poll wallet sync');
     act(mkMsg.syncWallet);
+  });
+
+  useInterval(100000, () => {
+    console.log('poll muesli ticker sync');
     act(mkMsg.getMuesliTicker);
-  }, []);
-
-  useEffect(() => {
-    const walletPolling = setInterval(() => {
-      console.log('poll wallet sync');
-      act(mkMsg.syncWallet);
-    }, 10000);
-
-    const muesliTickerPolling = setInterval(() => {
-      console.log('poll muesli ticker sync');
-      act(mkMsg.getMuesliTicker);
-    }, 100000);
-
-    return () => {
-      console.log('clear wallet sync');
-      clearInterval(walletPolling);
-      clearInterval(muesliTickerPolling);
-    };
-  }, []);
+  });
 
   return (
     <AppLayout>
@@ -187,12 +174,3 @@ const MuesliTickerTable = ({
     />
   );
 };
-
-// {
-//   baseVolume: number;
-//   id: CardanoFe_Muesli.MuesliId;
-//   lastPrice: Data_Maybe.Maybe<number>;
-//   priceChange: number;
-//   quoteVolume: number;
-//   tradingPair: Data_Pair.Pair<CardanoFe_Muesli.Currency>;
-// }

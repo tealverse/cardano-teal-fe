@@ -1,20 +1,20 @@
 import React, { ReactElement } from 'react';
 
-export type ColumnCfg = {
+export type ColumnCfg <Key> = {
   label: string;
-  selector: string;
+  selector: Key;
   sortable: boolean;
 };
 
-type SortableTableProps = {
-  columns: Array<ColumnCfg>;
-  data: Array<{ [key: string]: string | ReactElement | number }> | Array<never>;
+type SortableTableProps<Key extends string> = {
+  columns: Array<ColumnCfg<Key>>;
+  data: Array<Record<Key, string | ReactElement | number>  > | Array<never>;
 };
 
-export const SortableTable = ({
+export const SortableTable = <Key extends string>({
   columns,
   data,
-}: SortableTableProps): ReactElement => {
+}: SortableTableProps<Key>): ReactElement => {
   return (
     <table>
       <tr>

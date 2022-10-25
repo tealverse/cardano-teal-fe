@@ -14,3 +14,6 @@ generate-types: spago-build
   echo "exports = {}" > $DIR/index.js ;
   node generate-types.js --output-dir {{PURS_OUTPUT}} ;
   rm -rf pkgs/node_modules ;
+
+spago-repl:
+  yarn run spago repl

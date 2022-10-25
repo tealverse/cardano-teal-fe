@@ -2,6 +2,8 @@ module CardanoFe.Main where
 
 import Prelude
 
+import Affjax.Node as AN
+import CardanoFe.Muesli (MuesliTicker, getMuesliTicker)
 import Control.Monad.Error.Class (class MonadThrow, liftEither, throwError, try)
 import Control.Monad.Except (class MonadError, ExceptT, runExceptT)
 import Control.Parallel.Class (class Parallel, parallel, sequential)
@@ -17,6 +19,7 @@ import Data.RemoteReport (RemoteReport(..))
 import Data.RemoteReport as RR
 import Data.Show.Generic (genericShow)
 import Data.String as Str
+import Data.Typelevel.Undefined (undefined)
 import Effect (Effect)
 import Effect.Aff (Aff, Error, ParAff, error)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -165,13 +168,19 @@ initState = StLogin
 -- Message
 --------------------------------------------------------------------------------
 
-data Msg = MsgGetAvailableWallets | MsgSelectWallet WalletId | MsgSyncWallet
+data Msg = MsgGetAvailableWallets | MsgSelectWallet WalletId | MsgSyncWallet | MsgGetMuesliTicker
 
-mkMsg :: { getAvailableWallets :: _, selectWallet :: _, syncWallet :: _ }
+mkMsg
+  :: { getAvailableWallets :: _
+     , selectWallet :: _
+     , syncWallet :: _
+     , getMuesliTicker :: _
+     }
 mkMsg =
   { getAvailableWallets: MsgGetAvailableWallets
   , selectWallet: MsgSelectWallet
   , syncWallet: MsgSyncWallet
+  , getMuesliTicker: MsgGetMuesliTicker
   }
 
 --------------------------------------------------------------------------------
@@ -180,11 +189,13 @@ mkMsg =
 
 data Page
   = PageDashboard
+      { muesliTicker :: RemoteReport AppError MuesliTicker
+      }
   | PageSelectWallet
 
 unPage :: { onPageDashboard :: _, onPageSelectWallet :: _ } -> _
 unPage { onPageDashboard, onPageSelectWallet } = case _ of
-  PageDashboard -> onPageDashboard unit
+  PageDashboard _ -> onPageDashboard unit
   PageSelectWallet -> onPageSelectWallet unit
 
 --------------------------------------------------------------------------------
@@ -225,7 +236,7 @@ control { updateState, getState } msg =
               )
 
         updateState case _ of
-          StLogin _ -> StApp (initWallet w) PageDashboard
+          StLogin _ -> StApp (initWallet w) (PageDashboard { muesliTicker: NotAsked })
           st -> st
 
       StApp wallet _, MsgSyncWallet -> do
@@ -259,6 +270,18 @@ control { updateState, getState } msg =
                 )
             # parallel
           in unit
+
+        pure unit
+
+      StApp _ _, MsgGetMuesliTicker -> do
+        _ <- getMuesliTicker AN.driver
+          # liftAffEitherAppM
+          # subscibeRemoteReport
+              ( \updateRemoteReport -> do
+                  updateState case _ of
+                    StApp s (PageDashboard p) -> StApp s (PageDashboard p { muesliTicker = updateRemoteReport p.muesliTicker })
+                    st -> st
+              )
 
         pure unit
 
@@ -324,6 +347,9 @@ liftPromise mapErr f = f
 
 liftAffAppM :: forall a. Aff a -> AppM a
 liftAffAppM = liftAff
+
+liftAffEitherAppM :: forall a e. Aff (Either e a) -> AppM a
+liftAffEitherAppM = undefined
 
 liftEffectAppM :: forall a. Effect a -> AppM a
 liftEffectAppM = liftEffect

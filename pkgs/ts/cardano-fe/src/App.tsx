@@ -4,9 +4,14 @@ import { Login } from './components/views/Login';
 import { unAppState } from '~/CardanoFe.Main';
 import { pipe } from 'fp-ts/lib/function';
 import { useStateMachine } from './hooks/useStateMachine';
+import { useEffect } from 'react';
 
 const App = () => {
   const [state, act] = useStateMachine();
+
+  useEffect(() => {
+    console.log('Fresh state!');
+  }, [state]);
 
   return (
     <div tw="bg-gradient-to-b from-electric to-ribbon h-screen">
@@ -18,8 +23,10 @@ const App = () => {
               <Login state={st} act={act} />
             </CenteredLayout>
           ),
-          onApp: wallet => page =>
-            <CardanoApp state={[wallet, page]} act={act} />,
+          onApp: wallet => page => {
+            console.log('render wallet');
+            return <CardanoApp state={[wallet, page]} act={act} />;
+          },
         }),
       )}
     </div>

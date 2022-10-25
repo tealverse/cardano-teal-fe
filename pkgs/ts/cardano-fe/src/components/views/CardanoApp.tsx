@@ -29,13 +29,18 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
   const [wallet, page] = state;
 
   useEffect(() => {
+    console.log('init wallet sync');
     act(mkMsg.syncWallet);
+  }, []);
 
+  useEffect(() => {
     const walletPolling = setInterval(() => {
+      console.log('poll wallet sync');
       act(mkMsg.syncWallet);
     }, 10000);
 
     return () => {
+      console.log('clear wallet sync');
       clearInterval(walletPolling);
     };
   }, []);

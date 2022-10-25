@@ -19,7 +19,6 @@ import Data.RemoteReport (RemoteReport(..))
 import Data.RemoteReport as RR
 import Data.Show.Generic (genericShow)
 import Data.String as Str
-import Data.Typelevel.Undefined (undefined)
 import Effect (Effect)
 import Effect.Aff (Aff, Error, ParAff, error)
 import Effect.Aff.Class (class MonadAff, liftAff)
@@ -137,7 +136,7 @@ data AppError
   | ErrUtxos
   | ErrUnusedAddresses
   | ErrGetWalletApi WalletId
-  | ErrApi ApiError 
+  | ErrApi ApiError
 
 --------------------------------------------------------------------------------
 -- State
@@ -196,7 +195,7 @@ data Page
 
 unPage :: { onPageDashboard :: _, onPageSelectWallet :: _ } -> _
 unPage { onPageDashboard, onPageSelectWallet } = case _ of
-  PageDashboard _ -> onPageDashboard unit
+  PageDashboard page -> onPageDashboard page
   PageSelectWallet -> onPageSelectWallet unit
 
 --------------------------------------------------------------------------------
@@ -350,11 +349,11 @@ liftAffAppM :: forall a. Aff a -> AppM a
 liftAffAppM = liftAff
 
 liftAffEitherAppM :: forall a e. (e -> AppError) -> Aff (Either e a) -> AppM a
-liftAffEitherAppM mkError = liftAff >>> \appM -> do 
+liftAffEitherAppM mkError = liftAff >>> \appM -> do
   eitherEA <- appM
   case eitherEA of
     Left err -> throwError $ mkError err
-    Right ok -> pure ok 
+    Right ok -> pure ok
 
 liftEffectAppM :: forall a. Effect a -> AppM a
 liftEffectAppM = liftEffect

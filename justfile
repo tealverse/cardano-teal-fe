@@ -20,3 +20,6 @@ generate-types: spago-build
 
 spago-repl:
   yarn run spago repl
+
+ts-build:
+  yarn run tsc

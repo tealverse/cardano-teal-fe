@@ -20,6 +20,7 @@ import { CenteredLayout } from '../../App';
 import { unRemoteReport } from '~/Data.RemoteReport';
 import { printUtxoRaw } from '../../../core/CardanoFe.Main/index';
 import { MuesliTicker } from '~/CardanoFe.Muesli';
+import { unMaybe } from '../../../core/Simple.Data.Maybe/index.d';
 
 type CardanoAppProps = {
   state: [Wallet, Page];
@@ -51,7 +52,7 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
       {pipe(
         page,
         unPage({
-          onPageDashboard: () => (
+          onPageDashboard: page => (
             <div>
               <WalletDetails>
                 <pre>{printWallet(wallet.type)}</pre>
@@ -73,10 +74,11 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
                       onNotAsked: () => 'na',
                       onLoading: () => 'loading addrs...',
                       onFailure: () => 'failed',
-                      onSuccess: x =>
-                        x.data.length > 0
-                          ? printAddress(x.data[0]).substring(0, 15)
-                          : '[]',
+                      onSuccess: x => {
+                        const x0 = x.data[0];
+                        if (!x0) return '[]';
+                        return printAddress(x0).substring(0, 15);
+                      },
                     }),
                   )}
                 </pre>
@@ -87,17 +89,35 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
                       onNotAsked: () => 'na',
                       onLoading: () => 'loading utxos...',
                       onFailure: () => 'failed',
-                      onSuccess: x =>
-                        x.data.length > 0
-                          ? printUtxoRaw(x.data[0]).substring(0, 15)
-                          : '[]',
+                      onSuccess: x => {
+                        const x0 = x.data[0];
+                        if (!x0) return '[]';
+                        return printUtxoRaw(x0).substring(0, 15);
+                      },
                     }),
                   )}
                 </pre>
               </WalletDetails>
               <CenteredLayout>
                 <CardanoLogo size={20} />
-                
+                <MuesliTickerTable
+                  muesliTicker={pipe(
+                    page.muesliTicker,
+                    unRemoteReport({
+                      onNotAsked: () => undefined,
+                      onLoading: x =>
+                        pipe(
+                          x.previousData,
+                          unMaybe({
+                            onJust: x => x,
+                            onNothing: () => undefined,
+                          }),
+                        ),
+                      onFailure: () => undefined,
+                      onSuccess: x => x.data,
+                    }),
+                  )}
+                />
               </CenteredLayout>
             </div>
           ),
@@ -124,7 +144,10 @@ const AppLayout = styled.div(() => [
   `,
 ]);
 
-const MuesliTicker = ({muesliTicker} : {muesliTicker : MuesliTicker}) => {
-
-  return <div>muesli!!</div>
-}
+const MuesliTickerTable = ({
+  muesliTicker,
+}: {
+  muesliTicker?: MuesliTicker;
+}) => {
+  return <div>muesli!!</div>;
+};

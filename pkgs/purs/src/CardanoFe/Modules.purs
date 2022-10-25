@@ -9,6 +9,7 @@ import Control.Promise as Control.Promise
 import Data.RemoteReport as Data.RemoteReport
 import Effect (Effect)
 import Simple.Data.Maybe as Simple.Data.Maybe
+import Simple.Data.Pair as Simple.Data.Pair
 import TsBridge (TsProgram, Var, tsModuleFile, tsOpaqueType, tsProgram, tsTypeAlias, tsValue)
 import TsBridge.Cli (mkTypeGenCli)
 import Type.Proxy (Proxy(..))
@@ -46,13 +47,17 @@ myTsProgram =
         [ tsValue MP "unMaybe" (Simple.Data.Maybe.unMaybe :: _ -> _ (Var "A") -> (Var "C"))
         , tsValue MP "mkMaybe" (Simple.Data.Maybe.mkMaybe :: { mkJust :: (Var "A") -> _, mkNothing :: _ })
         ]
+    , tsModuleFile "Simple.Data.Pair/index"
+        [ tsValue MP "unPair" (Simple.Data.Pair.unPair :: _ -> _ (Var "A") -> (Var "C"))
+        , tsValue MP "mkPair" (Simple.Data.Pair.mkPair :: _ -> _ -> _ (Var "A"))
+        ]
     , tsModuleFile "Data.RemoteReport/index"
         [ tsValue MP "getData" (Data.RemoteReport.getData :: Data.RemoteReport.RemoteReport (Var "E") (Var "A") -> _)
         , tsValue MP "unRemoteReport" (Data.RemoteReport.unRemoteReport :: _ -> Data.RemoteReport.RemoteReport (Var "E") (Var "A") -> (Var "Z"))
         ]
     , tsModuleFile "CardanoFe.Muesli/index"
-        [ tsOpaqueType MP "MuesliTicker" (Proxy :: _ CardanoFe.Muesli.MuesliTicker) 
-        
+        [ tsOpaqueType MP "MuesliTicker" (Proxy :: _ CardanoFe.Muesli.MuesliTicker)
+
         ]
     ]
 

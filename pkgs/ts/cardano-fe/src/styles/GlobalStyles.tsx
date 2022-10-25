@@ -6,6 +6,9 @@ const customStyles = css({
   body: {
     ...tw`antialiased`,
   },
+  th: {
+    'text-align': 'left',
+  },
 });
 
 const GlobalStyles = () => (

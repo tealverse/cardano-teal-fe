@@ -8,7 +8,7 @@ export type ColumnCfg = {
 
 type SortableTableProps = {
   columns: Array<ColumnCfg>;
-  data: Array<{ [key: string]: string | ReactElement | number }>;
+  data: Array<{ [key: string]: string | ReactElement | number }> | Array<never>;
 };
 
 export const SortableTable = ({
@@ -17,21 +17,25 @@ export const SortableTable = ({
 }: SortableTableProps): ReactElement => {
   return (
     <table>
-      {columns.map(col => {
-        return (
+      <tr>
+        {columns.map(col => {
+          return <th>{col.label}</th>;
+        })}
+      </tr>
+      {data.length > 0 ? (
+        data.map(d => (
           <tr>
-            <th>{col.label}</th>
+            {columns.map(col => {
+              const x = d[col.selector];
+              return <td>{d[col.selector]}</td>;
+            })}
           </tr>
-        );
-      })}
-      {data.map(d => (
+        ))
+      ) : (
         <tr>
-          {columns.map(col => {
-            const x = d[col.selector];
-            return <td>{d[col.selector]}</td>;
-          })}
+          <td>No data!</td>
         </tr>
-      ))}
+      )}
     </table>
   );
 };

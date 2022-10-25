@@ -20,7 +20,9 @@ import { CenteredLayout } from '../../App';
 import { unRemoteReport } from '~/Data.RemoteReport';
 import { printUtxoRaw } from '../../../core/CardanoFe.Main/index';
 import { MuesliTicker } from '~/CardanoFe.Muesli';
-import { unMaybe } from '../../../core/Simple.Data.Maybe/index.d';
+import { unMaybe } from '../../../core/Simple.Data.Maybe/index';
+import { SortableTable } from '../SortableTable';
+import { pairToTsTuple } from '../../pursTsInterop';
 
 type CardanoAppProps = {
   state: [Wallet, Page];
@@ -31,8 +33,9 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
   const [wallet, page] = state;
 
   useEffect(() => {
-    console.log('init wallet sync');
+    console.log('init data sync');
     act(mkMsg.syncWallet);
+    act(mkMsg.getMuesliTicker);
   }, []);
 
   useEffect(() => {
@@ -41,9 +44,15 @@ export const CardanoApp = ({ state, act }: CardanoAppProps) => {
       act(mkMsg.syncWallet);
     }, 10000);
 
+    const muesliTickerPolling = setInterval(() => {
+      console.log('poll muesli ticker sync');
+      act(mkMsg.getMuesliTicker);
+    }, 100000);
+
     return () => {
       console.log('clear wallet sync');
       clearInterval(walletPolling);
+      clearInterval(muesliTickerPolling);
     };
   }, []);
 
@@ -149,5 +158,41 @@ const MuesliTickerTable = ({
 }: {
   muesliTicker?: MuesliTicker;
 }) => {
-  return <div>muesli!!</div>;
+  const tableData = muesliTicker?.map(mt => {
+    return {
+      tradingFrom: pairToTsTuple(mt.tradingPair)[0],
+      tradingTo: pairToTsTuple(mt.tradingPair)[1],
+      lastPrice: pipe(
+        mt.lastPrice,
+        unMaybe({
+          onJust: x => x,
+          onNothing: () => 0,
+        }),
+      ),
+      baseVolume: mt.baseVolume,
+      priceChange: mt.priceChange,
+    };
+  });
+
+  return (
+    <SortableTable
+      columns={[
+        { label: 'From', selector: 'tradingFrom', sortable: false },
+        { label: 'To', selector: 'tradingTo', sortable: false },
+        { label: 'Price', selector: 'lastPrice', sortable: false },
+        { label: 'Price Change', selector: 'priceChange', sortable: false },
+        { label: 'Volume', selector: 'baseVolume', sortable: false },
+      ]}
+      data={tableData || []}
+    />
+  );
 };
+
+// {
+//   baseVolume: number;
+//   id: CardanoFe_Muesli.MuesliId;
+//   lastPrice: Data_Maybe.Maybe<number>;
+//   priceChange: number;
+//   quoteVolume: number;
+//   tradingPair: Data_Pair.Pair<CardanoFe_Muesli.Currency>;
+// }

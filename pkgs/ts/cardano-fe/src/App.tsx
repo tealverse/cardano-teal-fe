@@ -14,7 +14,7 @@ const App = () => {
   }, [state]);
 
   return (
-    <div tw="bg-gradient-to-b from-electric to-ribbon h-screen">
+    <div tw="bg-gradient-to-b from-electric to-ribbon min-h-screen">
       {pipe(
         state,
         unAppState({
@@ -36,5 +36,5 @@ const App = () => {
 export default App;
 
 export const CenteredLayout = styled.div(() => [
-  tw`flex flex-col items-center justify-center h-screen`,
+  tw`flex flex-col items-center justify-center min-h-screen`,
 ]);
